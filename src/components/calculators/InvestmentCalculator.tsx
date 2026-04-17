@@ -244,43 +244,47 @@ export function InvestmentCalculator() {
                     format={(v) => formatCZK(v)}
                   />
 
-                  <div className="space-y-2">
-                    <Label className="text-sm">Typ výnosu</Label>
-                    <SegmentedControl<ReturnMode>
-                      value={a.returnMode}
-                      onChange={(v) => update(a.id, { returnMode: v })}
-                      options={[
-                        { value: "percent", label: "% p.a." },
-                        { value: "monthly_czk", label: "CZK/měs." },
-                      ]}
-                      size="sm"
-                    />
-                  </div>
+                  {!a.paysDividends && (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-sm">Typ výnosu</Label>
+                        <SegmentedControl<ReturnMode>
+                          value={a.returnMode}
+                          onChange={(v) => update(a.id, { returnMode: v })}
+                          options={[
+                            { value: "percent", label: "% p.a." },
+                            { value: "monthly_czk", label: "CZK/měs." },
+                          ]}
+                          size="sm"
+                        />
+                      </div>
 
-                  {a.returnMode === "percent" ? (
-                    <SliderField
-                      label="Očekávaný výnos"
-                      value={a.returnPct}
-                      onChange={(v) => update(a.id, { returnPct: v })}
-                      min={-5}
-                      max={25}
-                      step={0.1}
-                      unit="% p.a."
-                    />
-                  ) : (
-                    <SliderField
-                      label="Měsíční výnos"
-                      value={a.monthlyReturnCZK}
-                      onChange={(v) => update(a.id, { monthlyReturnCZK: v })}
-                      min={0}
-                      max={50_000}
-                      step={100}
-                      format={(v) => formatCZK(v)}
-                    />
+                      {a.returnMode === "percent" ? (
+                        <SliderField
+                          label="Očekávaný výnos"
+                          value={a.returnPct}
+                          onChange={(v) => update(a.id, { returnPct: v })}
+                          min={-5}
+                          max={25}
+                          step={0.1}
+                          unit="% p.a."
+                        />
+                      ) : (
+                        <SliderField
+                          label="Měsíční výnos"
+                          value={a.monthlyReturnCZK}
+                          onChange={(v) => update(a.id, { monthlyReturnCZK: v })}
+                          min={0}
+                          max={50_000}
+                          step={100}
+                          format={(v) => formatCZK(v)}
+                        />
+                      )}
+                    </>
                   )}
 
                   <SliderField
-                    label="Daň z výnosu / dividend"
+                    label="Daň z dividend"
                     value={a.taxPct}
                     onChange={(v) => update(a.id, { taxPct: v })}
                     min={0}
@@ -288,14 +292,6 @@ export function InvestmentCalculator() {
                     step={1}
                     unit="%"
                   />
-
-                  <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2.5">
-                    <Label className="text-sm">Reinvestovat výnosy</Label>
-                    <Switch
-                      checked={a.reinvest}
-                      onCheckedChange={(v) => update(a.id, { reinvest: v })}
-                    />
-                  </div>
                 </div>
 
                 {/* Dividend block */}
@@ -329,6 +325,13 @@ export function InvestmentCalculator() {
                           onChange={(v: Frequency) =>
                             update(a.id, { dividendFrequency: v })
                           }
+                        />
+                      </div>
+                      <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2.5">
+                        <Label className="text-sm">Reinvestovat dividendy</Label>
+                        <Switch
+                          checked={a.reinvest}
+                          onCheckedChange={(v) => update(a.id, { reinvest: v })}
                         />
                       </div>
                       {r && (
