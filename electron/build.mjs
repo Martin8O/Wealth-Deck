@@ -1,35 +1,32 @@
-// Build a standalone static SPA bundle for Electron.
-// We use a minimal Vite config that builds src/electron-entry.tsx as a regular
-// client-side React app (no SSR), so it can be loaded via file://.
-const { build } = require("vite");
-const react = require("@vitejs/plugin-react");
-const tailwindcss = require("@tailwindcss/vite");
-const path = require("path");
-const fs = require("fs");
+import { build } from "vite";
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import path from "node:path";
+import fs from "node:fs";
+import { fileURLToPath } from "node:url";
 
-(async () => {
-  const outDir = path.resolve(__dirname, "..", "dist-electron");
-  if (fs.existsSync(outDir)) fs.rmSync(outDir, { recursive: true });
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const root = path.resolve(__dirname, "..");
+const outDir = path.resolve(root, "dist-electron");
 
-  await build({
-    configFile: false,
-    root: path.resolve(__dirname, ".."),
-    base: "./",
-    plugins: [react.default(), tailwindcss()],
-    resolve: {
-      alias: {
-        "@": path.resolve(__dirname, "..", "src"),
-      },
-      dedupe: ["react", "react-dom"],
+if (fs.existsSync(outDir)) fs.rmSync(outDir, { recursive: true });
+
+await build({
+  configFile: false,
+  root,
+  base: "./",
+  plugins: [react(), tailwindcss()],
+  resolve: {
+    alias: { "@": path.resolve(root, "src") },
+    dedupe: ["react", "react-dom"],
+  },
+  build: {
+    outDir,
+    emptyOutDir: true,
+    rollupOptions: {
+      input: path.resolve(__dirname, "index.html"),
     },
-    build: {
-      outDir,
-      emptyOutDir: true,
-      rollupOptions: {
-        input: path.resolve(__dirname, "index.html"),
-      },
-    },
-  });
+  },
+});
 
-  console.log("Electron bundle built at:", outDir);
-})();
+console.log("Electron bundle built at:", outDir);
