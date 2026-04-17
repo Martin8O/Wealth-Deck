@@ -1,5 +1,5 @@
 import { Slider } from "@/components/ui/slider";
-import { Input } from "@/components/ui/input";
+import { NumberField } from "@/components/finance/NumberField";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
 
@@ -34,17 +34,15 @@ export function SliderField({
       <div className="flex items-center justify-between gap-3">
         <Label className="text-sm font-medium text-foreground">{label}</Label>
         <div className="flex items-center gap-1.5">
-          <Input
-            type="number"
+          <NumberField
             value={value}
-            onChange={(e) => {
-              const n = Number(e.target.value);
-              if (Number.isFinite(n)) onChange(Math.max(min, Math.min(max, n)));
-            }}
-            className="h-8 w-28 text-right tabular text-sm"
+            onChange={onChange}
             min={min}
             max={max}
             step={step}
+            decimals={step && step < 1 ? 2 : 0}
+            ariaLabel={label}
+            className="h-8 w-32 text-sm"
           />
           {unit && <span className="text-xs text-muted-foreground">{unit}</span>}
         </div>
