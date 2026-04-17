@@ -12,13 +12,14 @@ import {
 import { Panel } from "@/components/finance/Panel";
 import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
+import { NumberField } from "@/components/finance/NumberField";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { Plus, Trash2 } from "lucide-react";
+import { Plus, Trash2, Sparkles } from "lucide-react";
 import {
-  calcSavings,
+  calcSavingsOptimized,
   DEFAULT_ACCOUNTS,
   type SavingsAccount,
 } from "@/lib/finance/savings";
@@ -33,23 +34,23 @@ const COLORS = [
 ];
 
 export function SavingsCalculator() {
-  const [initial, setInitial] = useState(100_000);
+  const [totalAmount, setTotalAmount] = useState(500_000);
   const [monthly, setMonthly] = useState(5_000);
   const [years, setYears] = useState(5);
   const [applyTax, setApplyTax] = useState(true);
   const [accounts, setAccounts] = useState<SavingsAccount[]>(DEFAULT_ACCOUNTS);
 
   const months = years * 12;
-  const results = useMemo(
+  const result = useMemo(
     () =>
-      calcSavings({
-        initialDeposit: initial,
+      calcSavingsOptimized({
+        totalAmount,
         monthlyDeposit: monthly,
         months,
         applyTax,
         accounts,
       }),
-    [initial, monthly, months, applyTax, accounts],
+    [totalAmount, monthly, months, applyTax, accounts],
   );
 
   const chartData = useMemo(() => {
@@ -57,14 +58,18 @@ export function SavingsCalculator() {
     const step = Math.max(1, Math.floor(months / 60));
     for (let m = step; m <= months; m += step) {
       const row: Record<string, number | string> = { month: m };
-      results.forEach((r) => {
-        const sched = r.schedule[m - 1];
-        row[r.account.id] = sched ? Math.round(sched.balance) : 0;
-      });
+      let total = 0;
+      for (const a of accounts) {
+        const sched = result.perAccountSchedule[a.id]?.[m - 1];
+        const v = sched ? Math.round(sched.balance) : 0;
+        row[a.id] = v;
+        total += v;
+      }
+      row.total = total;
       points.push(row);
     }
     return points;
-  }, [results, months]);
+  }, [result, accounts, months]);
 
   const updateAcc = (id: string, patch: Partial<SavingsAccount>) =>
     setAccounts((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
@@ -83,17 +88,20 @@ export function SavingsCalculator() {
   const removeAcc = (id: string) =>
     setAccounts((prev) => (prev.length > 1 ? prev.filter((a) => a.id !== id) : prev));
 
+  const overflow =
+    result.allocations.reduce((s, a) => s + a.amount, 0) < totalAmount - 0.5;
+
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <Panel title="Vstupy" description="Porovnejte spořicí účty">
+        <Panel title="Vstupy" description="Optimalizujeme rozdělení mezi účty">
           <div className="space-y-5">
             <SliderField
-              label="Počáteční vklad"
-              value={initial}
-              onChange={setInitial}
+              label="Celková částka k uložení"
+              value={totalAmount}
+              onChange={setTotalAmount}
               min={0}
-              max={5_000_000}
+              max={10_000_000}
               step={10_000}
               format={(v) => formatCZK(v)}
             />
@@ -102,7 +110,7 @@ export function SavingsCalculator() {
               value={monthly}
               onChange={setMonthly}
               min={0}
-              max={50_000}
+              max={100_000}
               step={500}
               format={(v) => formatCZK(v)}
             />
@@ -123,19 +131,83 @@ export function SavingsCalculator() {
 
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
-            {results.map((r, i) => (
-              <StatCard
-                key={r.account.id}
-                label={r.account.name}
-                value={formatCZK(r.finalBalance)}
-                hint={`Úrok: ${formatCZK(r.totalInterest)} · ${formatPct(r.effectiveAnnualPct, 2)} efekt.`}
-                accent={i === 0 ? "primary" : "default"}
-              />
-            ))}
+            <StatCard
+              label="Konečný zůstatek"
+              value={formatCZK(result.totalFinal)}
+              hint={`Vloženo: ${formatCZK(result.totalDeposited)}`}
+              accent="primary"
+            />
+            <StatCard
+              label="Celkové úroky"
+              value={formatCZK(result.totalInterest)}
+              hint={`Efekt. ${formatPct(result.effectiveAnnualPct, 2)} p.a.`}
+              accent="success"
+            />
+            <StatCard
+              label="Vážená sazba (start)"
+              value={formatPct(result.weightedRatePct, 2)}
+              hint="Po optimálním rozdělení"
+              icon={<Sparkles className="size-4" />}
+            />
           </div>
 
+          <Panel
+            title="Optimální rozdělení"
+            description="Greedy alokace podle nejvyšší sazby v daném pásmu"
+          >
+            <div className="space-y-2">
+              {result.allocations.map((a, i) => {
+                const pct = totalAmount > 0 ? (a.amount / totalAmount) * 100 : 0;
+                return (
+                  <div
+                    key={a.accountId}
+                    className="rounded-xl border border-border bg-secondary/30 p-3"
+                  >
+                    <div className="flex items-center justify-between gap-3">
+                      <div className="flex items-center gap-2 min-w-0">
+                        <span
+                          className="size-2.5 shrink-0 rounded-full"
+                          style={{ background: COLORS[i % COLORS.length] }}
+                        />
+                        <span className="truncate text-sm font-medium">{a.accountName}</span>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-sm font-semibold tabular">
+                          {formatCZK(a.amount)}
+                        </p>
+                        <p className="text-[11px] text-muted-foreground tabular">
+                          {pct.toFixed(1)} % · {formatPct(a.blendedRatePct, 2)} p.a.
+                        </p>
+                      </div>
+                    </div>
+                    <div className="mt-2 h-1.5 w-full overflow-hidden rounded-full bg-background">
+                      <div
+                        className="h-full rounded-full"
+                        style={{
+                          width: `${pct}%`,
+                          background: COLORS[i % COLORS.length],
+                        }}
+                      />
+                    </div>
+                    <p className="mt-1.5 text-[11px] text-muted-foreground tabular">
+                      Úrok ~ {formatCZK(a.monthlyInterestNet)} / měs · {" "}
+                      {formatCZK(a.annualInterestNet)} / rok
+                      {applyTax ? " (po dani)" : ""}
+                    </p>
+                  </div>
+                );
+              })}
+              {overflow && (
+                <p className="rounded-lg bg-warning/10 p-2 text-xs text-warning-foreground">
+                  Pozn.: bez limitu nad cap žádný účet — část částky se nealokovala.
+                  Nastavte sazbu „nad limit" alespoň jednomu účtu.
+                </p>
+              )}
+            </div>
+          </Panel>
+
           <Panel title="Vývoj zůstatku" description="Měsíc po měsíci">
-            <div className="h-[320px]">
+            <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
@@ -161,12 +233,12 @@ export function SavingsCalculator() {
                     labelFormatter={(l) => `Měsíc ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
-                  {results.map((r, i) => (
+                  {accounts.map((a, i) => (
                     <Line
-                      key={r.account.id}
+                      key={a.id}
                       type="monotone"
-                      dataKey={r.account.id}
-                      name={r.account.name}
+                      dataKey={a.id}
+                      name={a.name}
                       stroke={COLORS[i % COLORS.length]}
                       strokeWidth={2}
                       dot={false}
@@ -180,11 +252,11 @@ export function SavingsCalculator() {
       </div>
 
       <Panel
-        title="Účty a sazby"
-        description="Pásmo: do limitu sazba A, nad limit sazba B"
+        title="Spořicí účty"
+        description="Pásmo: do limitu sazba A, nad limit sazba B (% p.a.)"
         action={
           <Button size="sm" variant="outline" onClick={addAcc}>
-            <Plus className="size-4" /> Přidat
+            <Plus className="size-4" /> Přidat účet
           </Button>
         }
       >
@@ -203,33 +275,38 @@ export function SavingsCalculator() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Sazba do limitu</Label>
-                <Input
-                  type="number"
-                  step="0.05"
+                <Label className="text-xs text-muted-foreground">Sazba do limitu (%)</Label>
+                <NumberField
                   value={a.rateBelowPct}
-                  onChange={(e) => updateAcc(a.id, { rateBelowPct: Number(e.target.value) })}
-                  className="h-9 text-right tabular"
+                  onChange={(v) => updateAcc(a.id, { rateBelowPct: v })}
+                  min={0}
+                  max={20}
+                  step={0.05}
+                  decimals={2}
+                  className="h-9"
                 />
               </div>
               <div>
                 <Label className="text-xs text-muted-foreground">Limit (CZK)</Label>
-                <Input
-                  type="number"
-                  step="10000"
+                <NumberField
                   value={a.cap}
-                  onChange={(e) => updateAcc(a.id, { cap: Number(e.target.value) })}
-                  className="h-9 text-right tabular"
+                  onChange={(v) => updateAcc(a.id, { cap: v })}
+                  min={0}
+                  max={50_000_000}
+                  step={10_000}
+                  className="h-9"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Sazba nad limit</Label>
-                <Input
-                  type="number"
-                  step="0.05"
+                <Label className="text-xs text-muted-foreground">Sazba nad limit (%)</Label>
+                <NumberField
                   value={a.rateAbovePct}
-                  onChange={(e) => updateAcc(a.id, { rateAbovePct: Number(e.target.value) })}
-                  className="h-9 text-right tabular"
+                  onChange={(v) => updateAcc(a.id, { rateAbovePct: v })}
+                  min={0}
+                  max={20}
+                  step={0.05}
+                  decimals={2}
+                  className="h-9"
                 />
               </div>
               <Button
