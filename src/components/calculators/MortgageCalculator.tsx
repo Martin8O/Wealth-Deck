@@ -12,6 +12,7 @@ import {
 import { Panel } from "@/components/finance/Panel";
 import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
+import { MortgageSensitivity } from "@/components/finance/MortgageSensitivity";
 import { calcMortgage } from "@/lib/finance/mortgage";
 import { formatCZK, formatPct, formatYears } from "@/lib/finance/format";
 import { AlertTriangle } from "lucide-react";
@@ -191,6 +192,12 @@ export function MortgageCalculator() {
             </ResponsiveContainer>
           </div>
         </Panel>
+
+        <MortgageSensitivity
+          loanAmount={result.loanAmount}
+          interestRatePct={rate}
+          currentTermYears={years}
+        />
       </div>
     </div>
   );
