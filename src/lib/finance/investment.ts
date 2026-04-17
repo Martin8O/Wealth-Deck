@@ -1,4 +1,8 @@
-// Multi-asset investment portfolio with optional dividend payouts.
+// Multi-asset investment portfolio.
+// Each asset is EITHER:
+//   - growth-only (paysDividends = false): capital appreciation only
+//   - dividend-paying (paysDividends = true): yield is paid out at chosen frequency,
+//     with optional reinvestment. No double-counting with capital growth.
 import { Frequency, payoutsPerYear } from "./frequency";
 
 export type ReturnMode = "percent" | "monthly_czk";
@@ -9,10 +13,10 @@ export interface InvestmentAsset {
   invested: number; // initial CZK invested
   monthlyContribution: number;
   returnMode: ReturnMode;
-  returnPct: number; // % p.a. (when returnMode = percent)
-  monthlyReturnCZK: number; // CZK/month (when returnMode = monthly_czk)
+  returnPct: number; // % p.a. (when returnMode = percent) — used when paysDividends = false
+  monthlyReturnCZK: number; // CZK/month (when returnMode = monthly_czk) — used when paysDividends = false
   taxPct: number; // dividend / yield withholding tax %
-  reinvest: boolean;
+  reinvest: boolean; // reinvest dividends back into balance
   paysDividends: boolean;
   dividendYieldPct: number; // % p.a. of balance paid as dividends
   dividendFrequency: Frequency;
@@ -74,54 +78,70 @@ export function calcInvestment(input: InvestmentInputs): PortfolioResult {
     let totalDividendsReinvested = 0;
     let totalDividendsPaidOut = 0;
 
-    const annualReturn =
-      asset.returnMode === "percent" ? asset.returnPct / 100 : 0;
-    const monthlyGrowthRate =
-      asset.returnMode === "percent"
-        ? Math.pow(1 + annualReturn, 1 / 12) - 1
-        : 0;
-    const monthlyFlatGrowth =
-      asset.returnMode === "monthly_czk" ? asset.monthlyReturnCZK : 0;
-
     const ppy = payoutsPerYear(asset.dividendFrequency);
-    const monthsBetween = Math.round(12 / ppy);
-    const dividendYieldPerPayout = asset.dividendYieldPct / 100 / ppy;
+    const monthsBetween = Math.max(1, Math.round(12 / ppy));
+
+    // Per-period accrual rate on the balance.
+    // For dividend assets the yield IS the return (no separate capital growth).
+    // For growth-only assets we compound monthly from returnPct (or add flat CZK).
+    const annualYield = asset.paysDividends
+      ? asset.dividendYieldPct / 100
+      : asset.returnMode === "percent"
+        ? asset.returnPct / 100
+        : 0;
+    const monthlyAccrualRate = Math.pow(1 + annualYield, 1 / 12) - 1;
+    const flatMonthlyCZK =
+      !asset.paysDividends && asset.returnMode === "monthly_czk"
+        ? asset.monthlyReturnCZK
+        : 0;
+
+    // For dividend assets: accrue gross internally each month, then on payout
+    // months the accrued amount is taxed and either paid out or reinvested.
+    let accruedGross = 0;
 
     for (let m = 1; m <= months; m++) {
       // Monthly contribution at the start of month
       balance += asset.monthlyContribution;
       contributed += asset.monthlyContribution;
 
-      // Capital growth
       let growth = 0;
-      if (asset.returnMode === "percent") {
-        growth = balance * monthlyGrowthRate;
-      } else {
-        growth = monthlyFlatGrowth;
-      }
-      balance += growth;
-      totalGrowth += growth;
-
-      // Dividend payout (at end of month, on payout months)
       let dividend = 0;
       let reinvested = 0;
       let paidOut = 0;
-      if (asset.paysDividends && m % monthsBetween === 0 && dividendYieldPerPayout > 0) {
-        const gross = balance * dividendYieldPerPayout;
-        const net = gross * (1 - asset.taxPct / 100);
-        dividend = net;
-        totalDividends += net;
-        if (asset.reinvest) {
-          // Dividend stays inside the balance — but balance already includes growth.
-          // Treat as: subtract gross from balance (paid out), then add back net if reinvested.
-          balance = balance - gross + net;
-          reinvested = net;
-          totalDividendsReinvested += net;
-        } else {
-          balance -= gross;
-          paidOut = net;
-          totalDividendsPaidOut += net;
+
+      if (asset.paysDividends) {
+        // Accrue gross yield on current balance — does NOT compound mid-period
+        // (it sits aside until payout to avoid double-counting with the dividend).
+        const grossThisMonth = balance * monthlyAccrualRate;
+        accruedGross += grossThisMonth;
+
+        if (m % monthsBetween === 0) {
+          const gross = accruedGross;
+          accruedGross = 0;
+          const net = gross * (1 - asset.taxPct / 100);
+          dividend = net;
+          totalDividends += net;
+          if (asset.reinvest) {
+            balance += net; // net dividend joins the principal
+            reinvested = net;
+            totalDividendsReinvested += net;
+            growth = net; // treat reinvested net as the growth contribution
+            totalGrowth += net;
+          } else {
+            paidOut = net; // leaves the portfolio
+            totalDividendsPaidOut += net;
+            // balance unchanged — yield was paid out, principal stays
+          }
         }
+      } else {
+        // Growth-only asset
+        if (asset.returnMode === "percent") {
+          growth = balance * monthlyAccrualRate;
+        } else {
+          growth = flatMonthlyCZK;
+        }
+        balance += growth;
+        totalGrowth += growth;
       }
 
       if (balance < 0) balance = 0;
@@ -129,9 +149,10 @@ export function calcInvestment(input: InvestmentInputs): PortfolioResult {
     }
 
     const years = months / 12;
+    const baseline = Math.max(1, asset.invested + asset.monthlyContribution * months * 0.5);
     const cagr =
-      contributed > 0 && years > 0 && balance > 0
-        ? Math.pow(balance / Math.max(1, asset.invested || contributed), 1 / years) - 1
+      years > 0 && balance > 0
+        ? Math.pow(Math.max(balance, 1) / baseline, 1 / years) - 1
         : 0;
 
     const realFinal = balance / Math.pow(1 + inflMonthly, months);
