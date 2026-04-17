@@ -327,6 +327,13 @@ export function InvestmentCalculator() {
                           }
                         />
                       </div>
+                      <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2.5">
+                        <Label className="text-sm">Reinvestovat dividendy</Label>
+                        <Switch
+                          checked={a.reinvest}
+                          onCheckedChange={(v) => update(a.id, { reinvest: v })}
+                        />
+                      </div>
                       {r && (
                         <div className="grid grid-cols-2 gap-3 rounded-lg bg-secondary/40 p-3 text-xs">
                           <div>
