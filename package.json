@@ -1,5 +1,8 @@
 {
-  "name": "tanstack_start_ts",
+  "name": "financni-kalkulatory",
+  "productName": "Finanční Kalkulátory",
+  "version": "1.0.0",
+  "main": "electron/main.cjs",
   "private": true,
   "sideEffects": false,
   "type": "module",
