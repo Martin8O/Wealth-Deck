@@ -2,6 +2,7 @@ import { Slider } from "@/components/ui/slider";
 import { NumberField } from "@/components/finance/NumberField";
 import { Label } from "@/components/ui/label";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/context";
 
 interface Props {
   label: string;
@@ -28,7 +29,9 @@ export function SliderField({
   hint,
   className,
 }: Props) {
-  const display = format ? format(value) : value.toLocaleString("cs-CZ");
+  const { spec } = useI18n();
+  const fallback = (v: number) => v.toLocaleString(spec.locale);
+  const display = format ? format(value) : fallback(value);
   return (
     <div className={cn("space-y-2", className)}>
       <div className="flex items-center justify-between gap-3">
@@ -55,9 +58,9 @@ export function SliderField({
         onValueChange={(v) => onChange(v[0])}
       />
       <div className="flex justify-between text-[10px] uppercase tracking-wider text-muted-foreground">
-        <span>{format ? format(min) : min.toLocaleString("cs-CZ")}</span>
+        <span>{format ? format(min) : fallback(min)}</span>
         {hint && <span className="normal-case tracking-normal">{hint}</span>}
-        <span>{format ? format(max) : max.toLocaleString("cs-CZ")}</span>
+        <span>{format ? format(max) : fallback(max)}</span>
       </div>
       {!hint && (
         <div className="text-xs text-muted-foreground tabular">

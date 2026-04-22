@@ -9,29 +9,33 @@ import {
   ArrowLeft,
   ChevronRight,
   Sparkles,
+  Heart,
 } from "lucide-react";
 import { ThemeToggle } from "@/components/finance/ThemeToggle";
+import { LangToggle } from "@/components/finance/LangToggle";
+import { CurrencyToggle } from "@/components/finance/CurrencyToggle";
 import { PensionCalculator } from "@/components/calculators/PensionCalculator";
 import { MortgageCalculator } from "@/components/calculators/MortgageCalculator";
 import { SavingsCalculator } from "@/components/calculators/SavingsCalculator";
 import { InvestmentCalculator } from "@/components/calculators/InvestmentCalculator";
 import { YieldSimulator } from "@/components/calculators/YieldSimulator";
+import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 
 export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
-      { title: "Finanční Kalkulátory — důchod, hypotéka, spoření, investice" },
+      { title: "Financial Calculators — retirement, mortgage, savings, investments" },
       {
         name: "description",
         content:
-          "Sjednocené finanční kalkulátory v češtině: důchodová kalkulačka, hypoteční simulátor, spořicí účty, investiční portfolio s dividendami a flexibilní výnosový simulátor.",
+          "Five professional financial calculators in one place: retirement, mortgage, savings comparison, investment portfolio with dividends and a flexible yield simulator. Multi-currency, EN/CZ.",
       },
-      { property: "og:title", content: "Finanční Kalkulátory" },
+      { property: "og:title", content: "Financial Calculators" },
       {
         property: "og:description",
         content:
-          "Pět profesionálních finančních kalkulátorů na jednom místě — důchod, hypotéka, spoření a investice.",
+          "Five professional financial calculators in one place — retirement, mortgage, savings and investments.",
       },
     ],
   }),
@@ -42,54 +46,16 @@ type CalcKey = "pension" | "mortgage" | "savings" | "investment" | "yield";
 
 interface Calc {
   key: CalcKey;
-  title: string;
-  subtitle: string;
-  description: string;
   icon: React.ComponentType<{ className?: string }>;
-  accent: string; // tailwind gradient classes
+  accent: string;
 }
 
 const CALCULATORS: Calc[] = [
-  {
-    key: "pension",
-    title: "Důchodová kalkulačka",
-    subtitle: "Plán na důchod",
-    description: "Spočítejte si, kolik měsíčně bude váš důchod stačit, a kolik si je třeba spořit.",
-    icon: PiggyBank,
-    accent: "from-chart-1/20 to-chart-2/10",
-  },
-  {
-    key: "mortgage",
-    title: "Hypoteční simulátor",
-    subtitle: "Hypotéka & splátky",
-    description: "Modelujte měsíční splátku, úrok, mimořádné splátky a celkové náklady.",
-    icon: Home,
-    accent: "from-chart-3/20 to-chart-1/10",
-  },
-  {
-    key: "savings",
-    title: "Spořicí účty",
-    subtitle: "Porovnání bank",
-    description: "Porovnejte výnos spořicích účtů s pásmovými sazbami a daní z úroků.",
-    icon: Wallet,
-    accent: "from-chart-2/20 to-chart-4/10",
-  },
-  {
-    key: "investment",
-    title: "Investiční simulátor",
-    subtitle: "Portfolio & dividendy",
-    description: "Více aktiv, dividendy s volitelnou frekvencí, reinvestice, vážený výnos.",
-    icon: TrendingUp,
-    accent: "from-chart-4/20 to-chart-1/10",
-  },
-  {
-    key: "yield",
-    title: "Flexibilní výnosy",
-    subtitle: "STRC-style simulátor",
-    description: "Vlastní výnos, frekvence výplaty, daně, inflace a reinvestice.",
-    icon: LineChart,
-    accent: "from-chart-5/20 to-chart-3/10",
-  },
+  { key: "pension", icon: PiggyBank, accent: "from-chart-1/20 to-chart-2/10" },
+  { key: "mortgage", icon: Home, accent: "from-chart-3/20 to-chart-1/10" },
+  { key: "savings", icon: Wallet, accent: "from-chart-2/20 to-chart-4/10" },
+  { key: "investment", icon: TrendingUp, accent: "from-chart-4/20 to-chart-1/10" },
+  { key: "yield", icon: LineChart, accent: "from-chart-5/20 to-chart-3/10" },
 ];
 
 function CalculatorView({ k }: { k: CalcKey }) {
@@ -107,7 +73,18 @@ function CalculatorView({ k }: { k: CalcKey }) {
   }
 }
 
+function Switchers() {
+  return (
+    <div className="flex items-center gap-2">
+      <LangToggle />
+      <CurrencyToggle />
+      <ThemeToggle />
+    </div>
+  );
+}
+
 function Home_() {
+  const { t } = useI18n();
   const [active, setActive] = useState<CalcKey | null>(null);
   const panelRef = useRef<HTMLDivElement>(null);
 
@@ -131,16 +108,16 @@ function Home_() {
               className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
             >
               <ArrowLeft className="size-4" />
-              Zpět na výběr
+              {t("app.back")}
             </button>
             <div className="flex items-center gap-2">
               {activeCalc && (
                 <span className="hidden text-sm font-medium text-foreground md:inline">
-                  {activeCalc.title}
+                  {t(`calc.${activeCalc.key}.title`)}
                 </span>
               )}
             </div>
-            <ThemeToggle />
+            <Switchers />
           </div>
         </div>
       )}
@@ -150,20 +127,20 @@ function Home_() {
         <div className="mx-auto max-w-7xl px-4 pt-10 pb-8 md:px-8 md:pt-16 md:pb-12">
           {!active && (
             <div className="flex justify-end">
-              <ThemeToggle />
+              <Switchers />
             </div>
           )}
           <div className="mx-auto max-w-3xl text-center">
             <div className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card/60 px-3 py-1 text-xs font-medium text-muted-foreground backdrop-blur-sm">
               <Sparkles className="size-3 text-primary" />
-              Sjednocené finanční nástroje
+              {t("app.tagline")}
             </div>
             <h1 className="mt-4 text-balance text-4xl font-semibold tracking-tight text-foreground md:text-5xl">
-              Finanční <span className="text-primary">Kalkulátory</span>
+              {t("app.title.prefix")}{" "}
+              <span className="text-primary">{t("app.title.highlight")}</span>
             </h1>
             <p className="mx-auto mt-3 max-w-xl text-pretty text-base text-muted-foreground md:text-lg">
-              Pět profesionálních kalkulátorů — důchod, hypotéka, spoření, investice
-              a flexibilní výnosy. Vyberte si níže.
+              {t("app.subtitle")}
             </p>
           </div>
         </div>
@@ -206,12 +183,14 @@ function Home_() {
                     />
                   </div>
                   <p className="mt-4 text-[11px] font-medium uppercase tracking-wider text-muted-foreground">
-                    {c.subtitle}
+                    {t(`calc.${c.key}.subtitle`)}
                   </p>
                   <h2 className="mt-1 text-lg font-semibold text-foreground">
-                    {c.title}
+                    {t(`calc.${c.key}.title`)}
                   </h2>
-                  <p className="mt-1.5 text-sm text-muted-foreground">{c.description}</p>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    {t(`calc.${c.key}.desc`)}
+                  </p>
                 </div>
               </button>
             );
@@ -233,10 +212,10 @@ function Home_() {
                 </div>
                 <div>
                   <p className="text-xs uppercase tracking-wider text-muted-foreground">
-                    {activeCalc.subtitle}
+                    {t(`calc.${activeCalc.key}.subtitle`)}
                   </p>
                   <h2 className="text-2xl font-semibold text-foreground">
-                    {activeCalc.title}
+                    {t(`calc.${activeCalc.key}.title`)}
                   </h2>
                 </div>
               </>
@@ -247,8 +226,29 @@ function Home_() {
       )}
 
       <footer className="border-t border-border py-6 text-center text-xs text-muted-foreground">
-        © {new Date().getFullYear()} Finanční Kalkulátory · Všechny výpočty mají
-        orientační charakter.
+        <p>
+          © {new Date().getFullYear()} · {t("app.footer.disclaimer")}
+        </p>
+        <p className="mt-2 inline-flex items-center justify-center gap-1.5">
+          {t("app.vibecoded")}{" "}
+          <a
+            href="https://github.com/Martin8O"
+            target="_blank"
+            rel="noreferrer"
+            className="font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            Martin
+          </a>{" "}
+          {t("app.with")}{" "}
+          <a
+            href="https://lovable.dev"
+            target="_blank"
+            rel="noreferrer"
+            className="inline-flex items-center gap-1 font-medium text-foreground underline-offset-4 hover:text-primary hover:underline"
+          >
+            <Heart className="size-3 text-primary" /> Lovable
+          </a>
+        </p>
       </footer>
     </div>
   );

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -25,16 +25,22 @@ import {
   type ReturnMode,
 } from "@/lib/finance/investment";
 import type { Frequency } from "@/lib/finance/frequency";
-import { formatCZK, formatPct } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 
-const newAsset = (idx: number): InvestmentAsset => ({
+interface DefaultsLike {
+  investmentInvested: number;
+  investmentMonthly: number;
+  investmentMonthlyReturn: number;
+}
+
+const newAsset = (idx: number, name: string, d: DefaultsLike): InvestmentAsset => ({
   id: `asset_${Date.now()}_${idx}`,
-  name: `Aktivum ${idx}`,
-  invested: 100_000,
-  monthlyContribution: 2_000,
+  name,
+  invested: d.investmentInvested,
+  monthlyContribution: d.investmentMonthly,
   returnMode: "percent",
   returnPct: 8,
-  monthlyReturnCZK: 1_000,
+  monthlyReturnCZK: d.investmentMonthlyReturn,
   taxPct: 15,
   reinvest: true,
   paysDividends: false,
@@ -43,21 +49,40 @@ const newAsset = (idx: number): InvestmentAsset => ({
 });
 
 export function InvestmentCalculator() {
+  const { t, fmtMoney, fmtPct, spec } = useI18n();
+  const d = spec.defaults;
+
   const [horizonYears, setHorizonYears] = useState(15);
   const [inflation, setInflation] = useState(2.5);
-  const [assets, setAssets] = useState<InvestmentAsset[]>([
-    { ...newAsset(1), name: "ETF (akcie)" },
+  const [assets, setAssets] = useState<InvestmentAsset[]>(() => [
+    { ...newAsset(1, t("investment.asset.etf"), d) },
     {
-      ...newAsset(2),
-      name: "Dividendová akcie",
-      invested: 50_000,
-      monthlyContribution: 1_000,
+      ...newAsset(2, t("investment.asset.dividend"), d),
+      invested: Math.round(d.investmentInvested * 0.5),
+      monthlyContribution: Math.round(d.investmentMonthly * 0.5),
       returnPct: 5,
       paysDividends: true,
       dividendYieldPct: 4.5,
       dividendFrequency: "quarterly",
     },
   ]);
+
+  // Reset asset money fields when currency changes.
+  useEffect(() => {
+    setAssets([
+      { ...newAsset(1, t("investment.asset.etf"), d) },
+      {
+        ...newAsset(2, t("investment.asset.dividend"), d),
+        invested: Math.round(d.investmentInvested * 0.5),
+        monthlyContribution: Math.round(d.investmentMonthly * 0.5),
+        returnPct: 5,
+        paysDividends: true,
+        dividendYieldPct: 4.5,
+        dividendFrequency: "quarterly",
+      },
+    ]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.code]);
 
   const result = useMemo(
     () =>
@@ -71,7 +96,11 @@ export function InvestmentCalculator() {
 
   const update = (id: string, patch: Partial<InvestmentAsset>) =>
     setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, ...patch } : a)));
-  const add = () => setAssets((prev) => [...prev, newAsset(prev.length + 1)]);
+  const add = () =>
+    setAssets((prev) => [
+      ...prev,
+      newAsset(prev.length + 1, `${t("investment.asset.new")} ${prev.length + 1}`, d),
+    ]);
   const remove = (id: string) =>
     setAssets((prev) => (prev.length > 1 ? prev.filter((a) => a.id !== id) : prev));
 
@@ -96,57 +125,57 @@ export function InvestmentCalculator() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <Panel title="Globální nastavení">
+        <Panel title={t("investment.global.title")}>
           <div className="space-y-5">
             <SliderField
-              label="Investiční horizont"
+              label={t("investment.horizon")}
               value={horizonYears}
               onChange={setHorizonYears}
               min={1}
               max={40}
-              unit="let"
+              unit={t("common.years")}
             />
             <SliderField
-              label="Inflace"
+              label={t("investment.inflation")}
               value={inflation}
               onChange={setInflation}
               min={0}
               max={10}
               step={0.1}
-              unit="% p.a."
+              unit={t("common.percent.pa")}
             />
           </div>
         </Panel>
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Hodnota portfolia"
-            value={formatCZK(result.totalFinalBalance)}
-            hint={`Reálně: ${formatCZK(result.realFinalBalance)}`}
+            label={t("investment.stat.portfolio")}
+            value={fmtMoney(result.totalFinalBalance)}
+            hint={`${t("investment.stat.portfolio.hint")} ${fmtMoney(result.realFinalBalance)}`}
             accent="primary"
           />
           <StatCard
-            label="Celkem vloženo"
-            value={formatCZK(result.totalContributed)}
-            hint={`Růst: ${formatCZK(result.totalGrowth)}`}
+            label={t("investment.stat.contributed")}
+            value={fmtMoney(result.totalContributed)}
+            hint={`${t("investment.stat.contributed.hint")} ${fmtMoney(result.totalGrowth)}`}
           />
           <StatCard
-            label="Vážený výnos"
-            value={formatPct(result.weightedYieldPct, 2)}
-            hint="CAGR napříč aktivy"
+            label={t("investment.stat.weightedYield")}
+            value={fmtPct(result.weightedYieldPct, 2)}
+            hint={t("investment.stat.weightedYield.hint")}
             accent="success"
           />
           <StatCard
-            label="Dividendy ročně"
-            value={formatCZK(result.totalDividendsAnnual)}
-            hint={`Ø měsíčně: ${formatCZK(result.averageMonthlyDividend)}`}
+            label={t("investment.stat.dividends")}
+            value={fmtMoney(result.totalDividendsAnnual)}
+            hint={`${t("investment.stat.dividends.hint")} ${fmtMoney(result.averageMonthlyDividend)}`}
             accent="success"
             icon={<Coins className="size-4" />}
           />
         </div>
       </div>
 
-      <Panel title="Vývoj portfolia">
+      <Panel title={t("investment.chart.title")}>
         <div className="h-[340px]">
           <ResponsiveContainer width="100%" height="100%">
             <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -161,7 +190,7 @@ export function InvestmentCalculator() {
                 dataKey="month"
                 stroke="var(--color-muted-foreground)"
                 tick={{ fontSize: 11 }}
-                tickFormatter={(m) => `${Math.round(m / 12)}r`}
+                tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
               />
               <YAxis
                 stroke="var(--color-muted-foreground)"
@@ -175,12 +204,12 @@ export function InvestmentCalculator() {
                   borderRadius: 12,
                   fontSize: 12,
                 }}
-                formatter={(v: number) => formatCZK(v)}
-                labelFormatter={(l) => `Měsíc ${l}`}
+                formatter={(v: number) => fmtMoney(v)}
+                labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
               />
               <Legend wrapperStyle={{ fontSize: 12 }} />
               <Area
-                name="Celkem"
+                name={t("investment.chart.total")}
                 type="monotone"
                 dataKey="total"
                 stroke="var(--color-chart-1)"
@@ -193,10 +222,10 @@ export function InvestmentCalculator() {
       </Panel>
 
       <Panel
-        title="Aktiva v portfoliu"
+        title={t("investment.assets.title")}
         action={
           <Button size="sm" variant="outline" onClick={add}>
-            <Plus className="size-4" /> Přidat aktivum
+            <Plus className="size-4" /> {t("investment.assets.add")}
           </Button>
         }
       >
@@ -226,34 +255,39 @@ export function InvestmentCalculator() {
 
                 <div className="grid gap-4 md:grid-cols-2">
                   <SliderField
-                    label="Počáteční investice"
+                    label={t("investment.asset.invested")}
                     value={a.invested}
                     onChange={(v) => update(a.id, { invested: v })}
                     min={0}
-                    max={5_000_000}
-                    step={10_000}
-                    format={(v) => formatCZK(v)}
+                    max={spec.midCap}
+                    step={spec.midStep}
+                    format={(v) => fmtMoney(v)}
                   />
                   <SliderField
-                    label="Měsíční příspěvek"
+                    label={t("investment.asset.monthly")}
                     value={a.monthlyContribution}
                     onChange={(v) => update(a.id, { monthlyContribution: v })}
                     min={0}
-                    max={50_000}
-                    step={500}
-                    format={(v) => formatCZK(v)}
+                    max={spec.smallCap}
+                    step={spec.smallStep}
+                    format={(v) => fmtMoney(v)}
                   />
 
                   {!a.paysDividends && (
                     <>
                       <div className="space-y-2">
-                        <Label className="text-sm">Typ výnosu</Label>
+                        <Label className="text-sm">
+                          {t("investment.asset.returnType")}
+                        </Label>
                         <SegmentedControl<ReturnMode>
                           value={a.returnMode}
                           onChange={(v) => update(a.id, { returnMode: v })}
                           options={[
-                            { value: "percent", label: "% p.a." },
-                            { value: "monthly_czk", label: "CZK/měs." },
+                            { value: "percent", label: t("investment.asset.modePercent") },
+                            {
+                              value: "monthly_czk",
+                              label: `${spec.code} ${t("investment.asset.modeMonthly")}`,
+                            },
                           ]}
                           size="sm"
                         />
@@ -261,45 +295,46 @@ export function InvestmentCalculator() {
 
                       {a.returnMode === "percent" ? (
                         <SliderField
-                          label="Očekávaný výnos"
+                          label={t("investment.asset.returnPct")}
                           value={a.returnPct}
                           onChange={(v) => update(a.id, { returnPct: v })}
                           min={-5}
                           max={25}
                           step={0.1}
-                          unit="% p.a."
+                          unit={t("common.percent.pa")}
                         />
                       ) : (
                         <SliderField
-                          label="Měsíční výnos"
+                          label={t("investment.asset.returnCzk")}
                           value={a.monthlyReturnCZK}
                           onChange={(v) => update(a.id, { monthlyReturnCZK: v })}
                           min={0}
-                          max={50_000}
-                          step={100}
-                          format={(v) => formatCZK(v)}
+                          max={spec.tinyCap}
+                          step={spec.tinyStep}
+                          format={(v) => fmtMoney(v)}
                         />
                       )}
                     </>
                   )}
 
                   <SliderField
-                    label="Daň z dividend"
+                    label={t("investment.asset.tax")}
                     value={a.taxPct}
                     onChange={(v) => update(a.id, { taxPct: v })}
                     min={0}
                     max={35}
                     step={1}
-                    unit="%"
+                    unit={t("common.percent")}
                   />
                 </div>
 
-                {/* Dividend block */}
                 <div className="mt-4 rounded-xl border border-border bg-background/50 p-4">
                   <div className="mb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2">
                       <Coins className="size-4 text-primary" />
-                      <Label className="text-sm font-medium">Vyplácí dividendy?</Label>
+                      <Label className="text-sm font-medium">
+                        {t("investment.asset.paysDividends")}
+                      </Label>
                     </div>
                     <Switch
                       checked={a.paysDividends}
@@ -310,16 +345,16 @@ export function InvestmentCalculator() {
                   {a.paysDividends && (
                     <div className="space-y-4">
                       <SliderField
-                        label="Dividendový výnos"
+                        label={t("investment.asset.dividendYield")}
                         value={a.dividendYieldPct}
                         onChange={(v) => update(a.id, { dividendYieldPct: v })}
                         min={0}
                         max={15}
                         step={0.1}
-                        unit="% p.a."
+                        unit={t("common.percent.pa")}
                       />
                       <div className="space-y-2">
-                        <Label className="text-sm">Frekvence výplaty</Label>
+                        <Label className="text-sm">{t("common.frequency")}</Label>
                         <FrequencyPicker
                           value={a.dividendFrequency}
                           onChange={(v: Frequency) =>
@@ -328,7 +363,9 @@ export function InvestmentCalculator() {
                         />
                       </div>
                       <div className="flex items-center justify-between rounded-xl border border-border bg-background/40 px-3 py-2.5">
-                        <Label className="text-sm">Reinvestovat dividendy</Label>
+                        <Label className="text-sm">
+                          {t("investment.asset.reinvest")}
+                        </Label>
                         <Switch
                           checked={a.reinvest}
                           onCheckedChange={(v) => update(a.id, { reinvest: v })}
@@ -337,15 +374,19 @@ export function InvestmentCalculator() {
                       {r && (
                         <div className="grid grid-cols-2 gap-3 rounded-lg bg-secondary/40 p-3 text-xs">
                           <div>
-                            <p className="text-muted-foreground">Dividendy ročně (po zdanění)</p>
+                            <p className="text-muted-foreground">
+                              {t("investment.asset.divAnnualNet")}
+                            </p>
                             <p className="mt-0.5 font-semibold tabular text-success">
-                              {formatCZK(r.annualDividend)}
+                              {fmtMoney(r.annualDividend)}
                             </p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Ø měsíční cashflow</p>
+                            <p className="text-muted-foreground">
+                              {t("investment.asset.divAvgMonthly")}
+                            </p>
                             <p className="mt-0.5 font-semibold tabular">
-                              {formatCZK(r.averageMonthlyDividend)}
+                              {fmtMoney(r.averageMonthlyDividend)}
                             </p>
                           </div>
                         </div>
@@ -357,22 +398,34 @@ export function InvestmentCalculator() {
                 {r && (
                   <div className="mt-4 grid grid-cols-2 gap-3 border-t border-border pt-4 sm:grid-cols-4">
                     <div className="text-xs">
-                      <p className="text-muted-foreground">Konečná hodnota</p>
-                      <p className="font-semibold tabular">{formatCZK(r.finalBalance)}</p>
+                      <p className="text-muted-foreground">
+                        {t("investment.asset.final")}
+                      </p>
+                      <p className="font-semibold tabular">{fmtMoney(r.finalBalance)}</p>
                     </div>
                     <div className="text-xs">
-                      <p className="text-muted-foreground">Vloženo</p>
-                      <p className="font-semibold tabular">{formatCZK(r.totalContributed)}</p>
-                    </div>
-                    <div className="text-xs">
-                      <p className="text-muted-foreground">Růst</p>
-                      <p className="font-semibold tabular text-success">
-                        {formatCZK(r.totalGrowth)}
+                      <p className="text-muted-foreground">
+                        {t("investment.asset.contributed")}
+                      </p>
+                      <p className="font-semibold tabular">
+                        {fmtMoney(r.totalContributed)}
                       </p>
                     </div>
                     <div className="text-xs">
-                      <p className="text-muted-foreground">CAGR</p>
-                      <p className="font-semibold tabular">{formatPct(r.effectiveAnnualPct, 2)}</p>
+                      <p className="text-muted-foreground">
+                        {t("investment.asset.growth")}
+                      </p>
+                      <p className="font-semibold tabular text-success">
+                        {fmtMoney(r.totalGrowth)}
+                      </p>
+                    </div>
+                    <div className="text-xs">
+                      <p className="text-muted-foreground">
+                        {t("investment.asset.cagr")}
+                      </p>
+                      <p className="font-semibold tabular">
+                        {fmtPct(r.effectiveAnnualPct, 2)}
+                      </p>
                     </div>
                   </div>
                 )}

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Moon, Sun } from "lucide-react";
+import { useI18n } from "@/lib/i18n/context";
 
 type Theme = "light" | "dark";
 
@@ -11,11 +12,12 @@ function getInitial(): Theme {
 }
 
 export function ThemeToggle() {
+  const { t } = useI18n();
   const [theme, setTheme] = useState<Theme>("dark");
 
   useEffect(() => {
-    const t = getInitial();
-    setTheme(t);
+    const tInit = getInitial();
+    setTheme(tInit);
   }, []);
 
   useEffect(() => {
@@ -30,9 +32,10 @@ export function ThemeToggle() {
       type="button"
       onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
       className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-border bg-card text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
-      aria-label="Přepnout vzhled"
+      aria-label={t("app.theme.toggle")}
     >
       {theme === "dark" ? <Sun className="size-4" /> : <Moon className="size-4" />}
     </button>
   );
 }
+
