@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -13,18 +13,30 @@ import { Panel } from "@/components/finance/Panel";
 import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
 import { calcPension } from "@/lib/finance/pension";
-import { formatCZK } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 import { AlertTriangle } from "lucide-react";
 
 export function PensionCalculator() {
+  const { t, fmtMoney, spec } = useI18n();
+  const d = spec.defaults;
+
   const [currentAge, setCurrentAge] = useState(35);
   const [retirementAge, setRetirementAge] = useState(65);
-  const [currentSavings, setCurrentSavings] = useState(200_000);
-  const [monthlyContribution, setMonthlyContribution] = useState(5_000);
+  const [currentSavings, setCurrentSavings] = useState(d.pensionSavings);
+  const [monthlyContribution, setMonthlyContribution] = useState(d.pensionMonthly);
   const [expectedReturn, setExpectedReturn] = useState(7);
   const [inflation, setInflation] = useState(2.5);
-  const [desiredPension, setDesiredPension] = useState(30_000);
+  const [desiredPension, setDesiredPension] = useState(d.pensionDesired);
   const [lifeExpectancy, setLifeExpectancy] = useState(90);
+
+  // When currency changes, reset money inputs to that currency's defaults so
+  // values stay sensible (no FX conversion is performed).
+  useEffect(() => {
+    setCurrentSavings(d.pensionSavings);
+    setMonthlyContribution(d.pensionMonthly);
+    setDesiredPension(d.pensionDesired);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.code]);
 
   const result = useMemo(
     () =>
@@ -60,76 +72,76 @@ export function PensionCalculator() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-      <Panel title="Vstupy" description="Plánujte si svůj důchod">
+      <Panel title={t("common.inputs")} description={t("pension.inputs.desc")}>
         <div className="space-y-5">
           <SliderField
-            label="Aktuální věk"
+            label={t("pension.currentAge")}
             value={currentAge}
             onChange={setCurrentAge}
             min={18}
             max={70}
-            unit="let"
+            unit={t("common.years")}
           />
           <SliderField
-            label="Věk odchodu do důchodu"
+            label={t("pension.retirementAge")}
             value={retirementAge}
             onChange={setRetirementAge}
             min={Math.max(currentAge + 1, 50)}
             max={75}
-            unit="let"
+            unit={t("common.years")}
           />
           <SliderField
-            label="Aktuální úspory"
+            label={t("pension.currentSavings")}
             value={currentSavings}
             onChange={setCurrentSavings}
             min={0}
-            max={5_000_000}
-            step={10_000}
-            format={(v) => formatCZK(v)}
+            max={d.midCap ?? spec.midCap}
+            step={spec.midStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Měsíční příspěvek"
+            label={t("pension.monthlyContribution")}
             value={monthlyContribution}
             onChange={setMonthlyContribution}
             min={0}
-            max={50_000}
-            step={500}
-            format={(v) => formatCZK(v)}
+            max={spec.smallCap}
+            step={spec.smallStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Očekávaný výnos"
+            label={t("pension.expectedReturn")}
             value={expectedReturn}
             onChange={setExpectedReturn}
             min={0}
             max={15}
             step={0.1}
-            unit="% p.a."
+            unit={t("common.percent.pa")}
           />
           <SliderField
-            label="Inflace"
+            label={t("pension.inflation")}
             value={inflation}
             onChange={setInflation}
             min={0}
             max={10}
             step={0.1}
-            unit="% p.a."
+            unit={t("common.percent.pa")}
           />
           <SliderField
-            label="Požadovaný důchod (dnes)"
+            label={t("pension.desiredPension")}
             value={desiredPension}
             onChange={setDesiredPension}
             min={0}
-            max={100_000}
-            step={1_000}
-            format={(v) => formatCZK(v)}
+            max={spec.smallCap * 2}
+            step={spec.smallStep * 2}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Doba dožití"
+            label={t("pension.lifeExpectancy")}
             value={lifeExpectancy}
             onChange={setLifeExpectancy}
             min={Math.max(retirementAge + 1, 70)}
             max={105}
-            unit="let"
+            unit={t("common.years")}
           />
         </div>
       </Panel>
@@ -148,30 +160,30 @@ export function PensionCalculator() {
 
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Kapitál v důchodu"
-            value={formatCZK(result.potAtRetirement)}
-            hint={`Reálně: ${formatCZK(result.potAtRetirementReal)}`}
+            label={t("pension.stat.pot")}
+            value={fmtMoney(result.potAtRetirement)}
+            hint={`${t("pension.stat.pot.hint")} ${fmtMoney(result.potAtRetirementReal)}`}
             accent="primary"
           />
           <StatCard
-            label="Udržitelný měsíční výběr"
-            value={formatCZK(result.sustainableMonthlyReal)}
-            hint="V dnešních cenách"
+            label={t("pension.stat.sustainable")}
+            value={fmtMoney(result.sustainableMonthlyReal)}
+            hint={t("pension.stat.sustainable.hint")}
           />
           <StatCard
-            label="Cíl měsíčně"
-            value={formatCZK(desiredPension)}
-            hint={`Nominálně v důchodu: ${formatCZK(result.desiredMonthlyAtRetirementNominal)}`}
+            label={t("pension.stat.target")}
+            value={fmtMoney(desiredPension)}
+            hint={`${t("pension.stat.target.hint")} ${fmtMoney(result.desiredMonthlyAtRetirementNominal)}`}
           />
           <StatCard
-            label={gap >= 0 ? "Přebytek vs. cíl" : "Schodek vs. cíl"}
-            value={formatCZK(Math.abs(gap))}
+            label={gap >= 0 ? t("pension.stat.surplus") : t("pension.stat.deficit")}
+            value={fmtMoney(Math.abs(gap))}
             accent={gap >= 0 ? "success" : "destructive"}
-            hint="Měsíčně, dnešní hodnota"
+            hint={t("pension.stat.gap.hint")}
           />
         </div>
 
-        <Panel title="Vývoj kapitálu" description="Nominální vs. reálná hodnota">
+        <Panel title={t("pension.chart.title")} description={t("pension.chart.desc")}>
           <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -199,12 +211,12 @@ export function PensionCalculator() {
                     borderRadius: 12,
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => formatCZK(v)}
-                  labelFormatter={(l) => `Věk ${l}`}
+                  formatter={(v: number) => fmtMoney(v)}
+                  labelFormatter={(l) => `${t("pension.chart.ageLabel")} ${l}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
-                  name="Nominálně"
+                  name={t("pension.chart.nominal")}
                   type="monotone"
                   dataKey="nominal"
                   stroke="var(--color-chart-1)"
@@ -212,7 +224,7 @@ export function PensionCalculator() {
                   strokeWidth={2}
                 />
                 <Area
-                  name="Reálně (dnes)"
+                  name={t("pension.chart.real")}
                   type="monotone"
                   dataKey="real"
                   stroke="var(--color-chart-2)"

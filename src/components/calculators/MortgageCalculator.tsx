@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -14,15 +14,25 @@ import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
 import { MortgageSensitivity } from "@/components/finance/MortgageSensitivity";
 import { calcMortgage } from "@/lib/finance/mortgage";
-import { formatCZK, formatPct, formatYears } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 import { AlertTriangle } from "lucide-react";
 
 export function MortgageCalculator() {
-  const [price, setPrice] = useState(6_000_000);
-  const [downPayment, setDownPayment] = useState(1_200_000);
+  const { t, fmtMoney, fmtPct, fmtYears, spec } = useI18n();
+  const d = spec.defaults;
+
+  const [price, setPrice] = useState(d.mortgagePrice);
+  const [downPayment, setDownPayment] = useState(d.mortgageDown);
   const [years, setYears] = useState(30);
   const [rate, setRate] = useState(5.2);
-  const [extra, setExtra] = useState(0);
+  const [extra, setExtra] = useState(d.mortgageExtra);
+
+  useEffect(() => {
+    setPrice(d.mortgagePrice);
+    setDownPayment(d.mortgageDown);
+    setExtra(d.mortgageExtra);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.code]);
 
   const result = useMemo(
     () =>
@@ -37,7 +47,6 @@ export function MortgageCalculator() {
   );
 
   const chartData = useMemo(() => {
-    // Sample to ~120 points
     const step = Math.max(1, Math.floor(result.schedule.length / 120));
     return result.schedule
       .filter((_, i) => i % step === 0 || i === result.schedule.length - 1)
@@ -53,54 +62,54 @@ export function MortgageCalculator() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-      <Panel title="Vstupy" description="Vyhodnoťte si hypotéku">
+      <Panel title={t("common.inputs")} description={t("mortgage.inputs.desc")}>
         <div className="space-y-5">
           <SliderField
-            label="Cena nemovitosti"
+            label={t("mortgage.price")}
             value={price}
             onChange={(v) => {
               setPrice(v);
               if (downPayment > v) setDownPayment(v);
             }}
-            min={500_000}
-            max={30_000_000}
-            step={50_000}
-            format={(v) => formatCZK(v)}
+            min={spec.midStep * 5}
+            max={spec.bigCap}
+            step={spec.bigStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label={`Vlastní zdroje (${downPct.toFixed(0)} %)`}
+            label={`${t("mortgage.downPayment")} (${downPct.toFixed(0)} %)`}
             value={downPayment}
             onChange={setDownPayment}
             min={0}
             max={price}
-            step={10_000}
-            format={(v) => formatCZK(v)}
+            step={spec.midStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Doba splácení"
+            label={t("mortgage.term")}
             value={years}
             onChange={setYears}
             min={5}
             max={40}
-            unit="let"
+            unit={t("common.years")}
           />
           <SliderField
-            label="Úroková sazba"
+            label={t("mortgage.rate")}
             value={rate}
             onChange={setRate}
             min={1}
             max={12}
             step={0.05}
-            unit="% p.a."
+            unit={t("common.percent.pa")}
           />
           <SliderField
-            label="Mimořádná splátka měsíčně"
+            label={t("mortgage.extra")}
             value={extra}
             onChange={setExtra}
             min={0}
-            max={50_000}
-            step={500}
-            format={(v) => formatCZK(v)}
+            max={spec.smallCap}
+            step={spec.smallStep}
+            format={(v) => fmtMoney(v)}
           />
         </div>
       </Panel>
@@ -110,44 +119,48 @@ export function MortgageCalculator() {
           <div className="flex gap-2 rounded-xl border border-warning/40 bg-warning/10 p-3 text-sm">
             <AlertTriangle className="size-4 shrink-0 text-warning" />
             <span>
-              LTV {formatPct(result.ltv * 100, 1)} —{" "}
+              LTV {fmtPct(result.ltv * 100, 1)} —{" "}
               {result.ltvWarning === "warn90"
-                ? "banky obvykle nepůjčí přes 90 %, případně s vyšším úrokem."
-                : "očekávejte přirážku k úroku nad 80 % LTV."}
+                ? t("mortgage.warn.ltv90")
+                : t("mortgage.warn.ltv80")}
             </span>
           </div>
         )}
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Měsíční splátka"
-            value={formatCZK(result.monthlyPayment)}
-            hint={extra > 0 ? `Vč. mimoř.: ${formatCZK(result.monthlyTotal)}` : undefined}
+            label={t("mortgage.stat.payment")}
+            value={fmtMoney(result.monthlyPayment)}
+            hint={
+              extra > 0
+                ? `${t("mortgage.stat.payment.extra")} ${fmtMoney(result.monthlyTotal)}`
+                : undefined
+            }
             accent="primary"
           />
           <StatCard
-            label="Výše úvěru"
-            value={formatCZK(result.loanAmount)}
-            hint={`LTV ${formatPct(result.ltv * 100, 1)}`}
+            label={t("mortgage.stat.loan")}
+            value={fmtMoney(result.loanAmount)}
+            hint={`LTV ${fmtPct(result.ltv * 100, 1)}`}
           />
           <StatCard
-            label="Celkem na úrocích"
-            value={formatCZK(result.totalInterest)}
-            hint={`Celkem zaplatíte: ${formatCZK(result.totalPaid)}`}
+            label={t("mortgage.stat.interest")}
+            value={fmtMoney(result.totalInterest)}
+            hint={`${t("mortgage.stat.interest.hint")} ${fmtMoney(result.totalPaid)}`}
             accent="warning"
           />
           <StatCard
-            label="Doba splácení"
-            value={formatYears(result.monthsToPayoff)}
+            label={t("mortgage.stat.term")}
+            value={fmtYears(result.monthsToPayoff)}
             hint={
               extra > 0 && result.monthsToPayoff < years * 12
-                ? `Úspora ${years * 12 - result.monthsToPayoff} m.`
+                ? `${t("mortgage.stat.term.saved")} ${years * 12 - result.monthsToPayoff} ${t("common.month")}`
                 : undefined
             }
             accent={extra > 0 && result.monthsToPayoff < years * 12 ? "success" : "default"}
           />
         </div>
 
-        <Panel title="Splátkový kalendář" description="Vývoj zůstatku a podíl úroku">
+        <Panel title={t("mortgage.chart.title")} description={t("mortgage.chart.desc")}>
           <div className="h-[320px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -162,7 +175,7 @@ export function MortgageCalculator() {
                   dataKey="month"
                   stroke="var(--color-muted-foreground)"
                   tick={{ fontSize: 11 }}
-                  tickFormatter={(m) => `${Math.round(m / 12)}r`}
+                  tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
                 />
                 <YAxis
                   stroke="var(--color-muted-foreground)"
@@ -176,12 +189,12 @@ export function MortgageCalculator() {
                     borderRadius: 12,
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => formatCZK(v)}
-                  labelFormatter={(l) => `Měsíc ${l}`}
+                  formatter={(v: number) => fmtMoney(v)}
+                  labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
-                  name="Zůstatek úvěru"
+                  name={t("mortgage.chart.balance")}
                   type="monotone"
                   dataKey="balance"
                   stroke="var(--color-chart-1)"

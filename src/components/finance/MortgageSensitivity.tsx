@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Panel } from "@/components/finance/Panel";
-import { formatCZK } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 import { cn } from "@/lib/utils";
 
 interface Props {
@@ -21,17 +21,18 @@ export function MortgageSensitivity({
   interestRatePct,
   currentTermYears,
 }: Props) {
+  const { t, fmtMoney, spec } = useI18n();
+
   const { rows, cols, table, min, max } = useMemo(() => {
     // Loan amount variants: -40% to +40% in 10% steps centered on current loan
-    const base = Math.max(100_000, Math.round(loanAmount / 100_000) * 100_000);
+    const stepUnit = Math.max(spec.smallStep, 100);
+    const base = Math.max(stepUnit * 10, Math.round(loanAmount / stepUnit) * stepUnit);
     const loanRows: number[] = [];
     for (let pct = -40; pct <= 40; pct += 10) {
-      loanRows.push(Math.round((base * (100 + pct)) / 100 / 50_000) * 50_000);
+      loanRows.push(Math.round((base * (100 + pct)) / 100 / stepUnit) * stepUnit);
     }
     const termCols = [10, 15, 20, 25, 30, 35, 40];
-    const matrix = loanRows.map((l) =>
-      termCols.map((y) => pmt(l, interestRatePct, y)),
-    );
+    const matrix = loanRows.map((l) => termCols.map((y) => pmt(l, interestRatePct, y)));
     let mn = Infinity;
     let mx = -Infinity;
     matrix.forEach((row) =>
@@ -41,21 +42,22 @@ export function MortgageSensitivity({
       }),
     );
     return { rows: loanRows, cols: termCols, table: matrix, min: mn, max: mx };
-  }, [loanAmount, interestRatePct]);
+  }, [loanAmount, interestRatePct, spec.smallStep]);
 
   const intensity = (v: number) => (max === min ? 0 : (v - min) / (max - min));
+  const matchTol = Math.max(spec.smallStep, 100);
 
   return (
     <Panel
-      title="Citlivostní tabulka splátek"
-      description={`Měsíční splátka pro různé výše úvěru a doby splácení (sazba ${interestRatePct.toFixed(2).replace(".", ",")} % p.a.)`}
+      title={t("mortgage.sens.title")}
+      description={`${t("mortgage.sens.desc")} ${interestRatePct.toFixed(2).replace(".", ",")} % p.a.)`}
     >
       <div className="overflow-x-auto">
         <table className="w-full min-w-[560px] border-collapse text-sm">
           <thead>
             <tr>
               <th className="sticky left-0 z-10 bg-card px-3 py-2 text-left text-xs font-medium uppercase tracking-wider text-muted-foreground">
-                Úvěr ↓ / Doba →
+                {t("mortgage.sens.headerLeft")}
               </th>
               {cols.map((c) => (
                 <th
@@ -65,7 +67,7 @@ export function MortgageSensitivity({
                     c === currentTermYears && "text-primary",
                   )}
                 >
-                  {c} let
+                  {c} {t("common.years")}
                 </th>
               ))}
             </tr>
@@ -77,13 +79,13 @@ export function MortgageSensitivity({
                   scope="row"
                   className="sticky left-0 z-10 bg-card px-3 py-2 text-left text-xs font-medium tabular text-muted-foreground"
                 >
-                  {formatCZK(loan)}
+                  {fmtMoney(loan)}
                 </th>
                 {cols.map((y, j) => {
                   const v = table[i][j];
-                  const t = intensity(v);
+                  const tInt = intensity(v);
                   const highlight =
-                    Math.abs(loan - loanAmount) < 50_001 && y === currentTermYears;
+                    Math.abs(loan - loanAmount) <= matchTol && y === currentTermYears;
                   return (
                     <td
                       key={y}
@@ -97,11 +99,11 @@ export function MortgageSensitivity({
                         highlight
                           ? undefined
                           : {
-                              backgroundColor: `color-mix(in oklab, var(--color-warning) ${(t * 18).toFixed(1)}%, transparent)`,
+                              backgroundColor: `color-mix(in oklab, var(--color-warning) ${(tInt * 18).toFixed(1)}%, transparent)`,
                             }
                       }
                     >
-                      {formatCZK(v)}
+                      {fmtMoney(v)}
                     </td>
                   );
                 })}
@@ -110,10 +112,7 @@ export function MortgageSensitivity({
           </tbody>
         </table>
       </div>
-      <p className="mt-3 text-xs text-muted-foreground">
-        Zvýrazněná buňka odpovídá vaší aktuální konfiguraci. Sytější odstín = vyšší
-        měsíční splátka.
-      </p>
+      <p className="mt-3 text-xs text-muted-foreground">{t("mortgage.sens.note")}</p>
     </Panel>
   );
 }
