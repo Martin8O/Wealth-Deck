@@ -95,7 +95,7 @@ export function PensionCalculator() {
             value={currentSavings}
             onChange={setCurrentSavings}
             min={0}
-            max={d.midCap ?? spec.midCap}
+            max={spec.midCap}
             step={spec.midStep}
             format={(v) => fmtMoney(v)}
           />
