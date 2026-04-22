@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -23,7 +23,7 @@ import {
   DEFAULT_ACCOUNTS,
   type SavingsAccount,
 } from "@/lib/finance/savings";
-import { formatCZK, formatPct } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 
 const COLORS = [
   "var(--color-chart-1)",
@@ -33,12 +33,57 @@ const COLORS = [
   "var(--color-chart-5)",
 ];
 
+function makeDefaultAccounts(spec: {
+  defaults: { savingsAccountCap: number };
+  code: string;
+}): SavingsAccount[] {
+  // For non-CZK currencies, scale defaults proportionally vs CZK templates.
+  if (spec.code === "CZK") return DEFAULT_ACCOUNTS;
+  const cap = spec.defaults.savingsAccountCap;
+  return [
+    {
+      id: "bank_a",
+      name: "Bank A",
+      rateBelowPct: 4.0,
+      cap,
+      rateAbovePct: 0.5,
+    },
+    {
+      id: "bank_b",
+      name: "Bank B",
+      rateBelowPct: 3.75,
+      cap: cap * 2,
+      rateAbovePct: 1.0,
+    },
+    {
+      id: "bank_c",
+      name: "Bank C",
+      rateBelowPct: 4.5,
+      cap: Math.round(cap * 1.2),
+      rateAbovePct: 1.5,
+    },
+  ];
+}
+
 export function SavingsCalculator() {
-  const [totalAmount, setTotalAmount] = useState(500_000);
-  const [monthly, setMonthly] = useState(5_000);
+  const { t, fmtMoney, fmtPct, spec } = useI18n();
+  const d = spec.defaults;
+
+  const [totalAmount, setTotalAmount] = useState(d.savingsTotal);
+  const [monthly, setMonthly] = useState(d.savingsMonthly);
   const [years, setYears] = useState(5);
   const [applyTax, setApplyTax] = useState(true);
-  const [accounts, setAccounts] = useState<SavingsAccount[]>(DEFAULT_ACCOUNTS);
+  const [accounts, setAccounts] = useState<SavingsAccount[]>(() =>
+    makeDefaultAccounts(spec),
+  );
+
+  // Reset money inputs and account caps when currency changes.
+  useEffect(() => {
+    setTotalAmount(d.savingsTotal);
+    setMonthly(d.savingsMonthly);
+    setAccounts(makeDefaultAccounts(spec));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.code]);
 
   const months = years * 12;
   const result = useMemo(
@@ -79,9 +124,9 @@ export function SavingsCalculator() {
       ...prev,
       {
         id: `acc_${Date.now()}`,
-        name: `Účet ${prev.length + 1}`,
+        name: `${t("savings.account.new")} ${prev.length + 1}`,
         rateBelowPct: 4,
-        cap: 250_000,
+        cap: d.savingsAccountCap,
         rateAbovePct: 0.5,
       },
     ]);
@@ -94,36 +139,36 @@ export function SavingsCalculator() {
   return (
     <div className="space-y-6">
       <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-        <Panel title="Vstupy" description="Optimalizujeme rozdělení mezi účty">
+        <Panel title={t("common.inputs")} description={t("savings.inputs.desc")}>
           <div className="space-y-5">
             <SliderField
-              label="Celková částka k uložení"
+              label={t("savings.totalAmount")}
               value={totalAmount}
               onChange={setTotalAmount}
               min={0}
-              max={10_000_000}
-              step={10_000}
-              format={(v) => formatCZK(v)}
+              max={spec.bigCap}
+              step={spec.bigStep}
+              format={(v) => fmtMoney(v)}
             />
             <SliderField
-              label="Měsíční vklad"
+              label={t("savings.monthly")}
               value={monthly}
               onChange={setMonthly}
               min={0}
-              max={100_000}
-              step={500}
-              format={(v) => formatCZK(v)}
+              max={spec.smallCap * 2}
+              step={spec.smallStep}
+              format={(v) => fmtMoney(v)}
             />
             <SliderField
-              label="Doba spoření"
+              label={t("savings.duration")}
               value={years}
               onChange={setYears}
               min={1}
               max={30}
-              unit="let"
+              unit={t("common.years")}
             />
             <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
-              <Label className="text-sm">Srážková daň 15 %</Label>
+              <Label className="text-sm">{t("savings.tax")}</Label>
               <Switch checked={applyTax} onCheckedChange={setApplyTax} />
             </div>
           </div>
@@ -132,28 +177,28 @@ export function SavingsCalculator() {
         <div className="space-y-4">
           <div className="grid gap-4 sm:grid-cols-3">
             <StatCard
-              label="Konečný zůstatek"
-              value={formatCZK(result.totalFinal)}
-              hint={`Vloženo: ${formatCZK(result.totalDeposited)}`}
+              label={t("savings.stat.final")}
+              value={fmtMoney(result.totalFinal)}
+              hint={`${t("savings.stat.final.hint")} ${fmtMoney(result.totalDeposited)}`}
               accent="primary"
             />
             <StatCard
-              label="Celkové úroky"
-              value={formatCZK(result.totalInterest)}
-              hint={`Efekt. ${formatPct(result.effectiveAnnualPct, 2)} p.a.`}
+              label={t("savings.stat.interest")}
+              value={fmtMoney(result.totalInterest)}
+              hint={`${t("savings.stat.interest.hint")} ${fmtPct(result.effectiveAnnualPct, 2)} p.a.`}
               accent="success"
             />
             <StatCard
-              label="Vážená sazba (start)"
-              value={formatPct(result.weightedRatePct, 2)}
-              hint="Po optimálním rozdělení"
+              label={t("savings.stat.weighted")}
+              value={fmtPct(result.weightedRatePct, 2)}
+              hint={t("savings.stat.weighted.hint")}
               icon={<Sparkles className="size-4" />}
             />
           </div>
 
           <Panel
-            title="Optimální rozdělení"
-            description="Greedy alokace podle nejvyšší sazby v daném pásmu"
+            title={t("savings.alloc.title")}
+            description={t("savings.alloc.desc")}
           >
             <div className="space-y-2">
               {result.allocations.map((a, i) => {
@@ -173,10 +218,10 @@ export function SavingsCalculator() {
                       </div>
                       <div className="text-right">
                         <p className="text-sm font-semibold tabular">
-                          {formatCZK(a.amount)}
+                          {fmtMoney(a.amount)}
                         </p>
                         <p className="text-[11px] text-muted-foreground tabular">
-                          {pct.toFixed(1)} % · {formatPct(a.blendedRatePct, 2)} p.a.
+                          {pct.toFixed(1)} % · {fmtPct(a.blendedRatePct, 2)} p.a.
                         </p>
                       </div>
                     </div>
@@ -190,23 +235,23 @@ export function SavingsCalculator() {
                       />
                     </div>
                     <p className="mt-1.5 text-[11px] text-muted-foreground tabular">
-                      Úrok ~ {formatCZK(a.monthlyInterestNet)} / měs · {" "}
-                      {formatCZK(a.annualInterestNet)} / rok
-                      {applyTax ? " (po dani)" : ""}
+                      {t("savings.alloc.row.interest")} {fmtMoney(a.monthlyInterestNet)}{" "}
+                      {t("savings.alloc.row.perMonth")} ·{" "}
+                      {fmtMoney(a.annualInterestNet)} {t("savings.alloc.row.perYear")}
+                      {applyTax ? ` ${t("savings.alloc.row.afterTax")}` : ""}
                     </p>
                   </div>
                 );
               })}
               {overflow && (
                 <p className="rounded-lg bg-warning/10 p-2 text-xs text-warning-foreground">
-                  Pozn.: bez limitu nad cap žádný účet — část částky se nealokovala.
-                  Nastavte sazbu „nad limit" alespoň jednomu účtu.
+                  {t("savings.alloc.overflow")}
                 </p>
               )}
             </div>
           </Panel>
 
-          <Panel title="Vývoj zůstatku" description="Měsíc po měsíci">
+          <Panel title={t("savings.chart.title")} description={t("savings.chart.desc")}>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -215,7 +260,7 @@ export function SavingsCalculator() {
                     dataKey="month"
                     stroke="var(--color-muted-foreground)"
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(m) => `${Math.round(m / 12)}r`}
+                    tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
                   />
                   <YAxis
                     stroke="var(--color-muted-foreground)"
@@ -229,8 +274,8 @@ export function SavingsCalculator() {
                       borderRadius: 12,
                       fontSize: 12,
                     }}
-                    formatter={(v: number) => formatCZK(v)}
-                    labelFormatter={(l) => `Měsíc ${l}`}
+                    formatter={(v: number) => fmtMoney(v)}
+                    labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
                   />
                   <Legend wrapperStyle={{ fontSize: 12 }} />
                   {accounts.map((a, i) => (
@@ -252,11 +297,11 @@ export function SavingsCalculator() {
       </div>
 
       <Panel
-        title="Spořicí účty"
-        description="Pásmo: do limitu sazba A, nad limit sazba B (% p.a.)"
+        title={t("savings.accounts.title")}
+        description={t("savings.accounts.desc")}
         action={
           <Button size="sm" variant="outline" onClick={addAcc}>
-            <Plus className="size-4" /> Přidat účet
+            <Plus className="size-4" /> {t("savings.accounts.add")}
           </Button>
         }
       >
@@ -267,7 +312,9 @@ export function SavingsCalculator() {
               className="grid gap-3 rounded-xl border border-border bg-secondary/30 p-3 md:grid-cols-[1.5fr_1fr_1fr_1fr_auto] md:items-end"
             >
               <div>
-                <Label className="text-xs text-muted-foreground">Název</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("savings.account.name")}
+                </Label>
                 <Input
                   value={a.name}
                   onChange={(e) => updateAcc(a.id, { name: e.target.value })}
@@ -275,7 +322,9 @@ export function SavingsCalculator() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Sazba do limitu (%)</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("savings.account.rateBelow")}
+                </Label>
                 <NumberField
                   value={a.rateBelowPct}
                   onChange={(v) => updateAcc(a.id, { rateBelowPct: v })}
@@ -287,18 +336,22 @@ export function SavingsCalculator() {
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Limit (CZK)</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("savings.account.cap")} ({spec.code})
+                </Label>
                 <NumberField
                   value={a.cap}
                   onChange={(v) => updateAcc(a.id, { cap: v })}
                   min={0}
-                  max={50_000_000}
-                  step={10_000}
+                  max={spec.bigCap}
+                  step={spec.midStep}
                   className="h-9"
                 />
               </div>
               <div>
-                <Label className="text-xs text-muted-foreground">Sazba nad limit (%)</Label>
+                <Label className="text-xs text-muted-foreground">
+                  {t("savings.account.rateAbove")}
+                </Label>
                 <NumberField
                   value={a.rateAbovePct}
                   onChange={(v) => updateAcc(a.id, { rateAbovePct: v })}
@@ -314,7 +367,7 @@ export function SavingsCalculator() {
                 size="icon"
                 onClick={() => removeAcc(a.id)}
                 disabled={accounts.length <= 1}
-                aria-label="Smazat"
+                aria-label={t("common.delete")}
               >
                 <Trash2 className="size-4" />
               </Button>

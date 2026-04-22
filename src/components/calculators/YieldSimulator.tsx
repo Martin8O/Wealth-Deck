@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Area,
   AreaChart,
@@ -17,17 +17,26 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { calcYieldSim } from "@/lib/finance/yieldSim";
 import type { Frequency } from "@/lib/finance/frequency";
-import { formatCZK, formatPct } from "@/lib/finance/format";
+import { useI18n } from "@/lib/i18n/context";
 
 export function YieldSimulator() {
-  const [initial, setInitial] = useState(100_000);
-  const [monthly, setMonthly] = useState(5_000);
+  const { t, fmtMoney, fmtPct, spec } = useI18n();
+  const d = spec.defaults;
+
+  const [initial, setInitial] = useState(d.yieldInitial);
+  const [monthly, setMonthly] = useState(d.yieldMonthly);
   const [yieldPct, setYieldPct] = useState(8);
   const [frequency, setFrequency] = useState<Frequency>("monthly");
   const [years, setYears] = useState(10);
   const [tax, setTax] = useState(15);
   const [inflation, setInflation] = useState(2.5);
   const [reinvest, setReinvest] = useState(true);
+
+  useEffect(() => {
+    setInitial(d.yieldInitial);
+    setMonthly(d.yieldMonthly);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [spec.code]);
 
   const result = useMemo(
     () =>
@@ -57,67 +66,67 @@ export function YieldSimulator() {
 
   return (
     <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
-      <Panel title="Vstupy" description="Flexibilní simulátor výnosu">
+      <Panel title={t("common.inputs")} description={t("yield.inputs.desc")}>
         <div className="space-y-5">
           <SliderField
-            label="Počáteční investice"
+            label={t("yield.initial")}
             value={initial}
             onChange={setInitial}
             min={0}
-            max={10_000_000}
-            step={10_000}
-            format={(v) => formatCZK(v)}
+            max={spec.bigCap}
+            step={spec.bigStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Měsíční příspěvek"
+            label={t("yield.monthly")}
             value={monthly}
             onChange={setMonthly}
             min={0}
-            max={100_000}
-            step={500}
-            format={(v) => formatCZK(v)}
+            max={spec.smallCap * 2}
+            step={spec.smallStep}
+            format={(v) => fmtMoney(v)}
           />
           <SliderField
-            label="Výnos"
+            label={t("yield.yield")}
             value={yieldPct}
             onChange={setYieldPct}
             min={0}
             max={20}
             step={0.1}
-            unit="% p.a."
+            unit={t("common.percent.pa")}
           />
           <div className="space-y-2">
-            <Label className="text-sm font-medium">Frekvence výplaty</Label>
+            <Label className="text-sm font-medium">{t("common.frequency")}</Label>
             <FrequencyPicker value={frequency} onChange={setFrequency} />
           </div>
           <SliderField
-            label="Horizont"
+            label={t("yield.horizon")}
             value={years}
             onChange={setYears}
             min={1}
             max={40}
-            unit="let"
+            unit={t("common.years")}
           />
           <SliderField
-            label="Daň z výnosu"
+            label={t("yield.tax")}
             value={tax}
             onChange={setTax}
             min={0}
             max={35}
             step={1}
-            unit="%"
+            unit={t("common.percent")}
           />
           <SliderField
-            label="Inflace"
+            label={t("yield.inflation")}
             value={inflation}
             onChange={setInflation}
             min={0}
             max={10}
             step={0.1}
-            unit="% p.a."
+            unit={t("common.percent.pa")}
           />
           <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
-            <Label className="text-sm">Reinvestovat výnosy</Label>
+            <Label className="text-sm">{t("yield.reinvest")}</Label>
             <Switch checked={reinvest} onCheckedChange={setReinvest} />
           </div>
         </div>
@@ -126,35 +135,35 @@ export function YieldSimulator() {
       <div className="space-y-6">
         <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
-            label="Konečná hodnota"
-            value={formatCZK(result.finalBalance)}
-            hint={`Reálně: ${formatCZK(result.realFinalBalance)}`}
+            label={t("yield.stat.final")}
+            value={fmtMoney(result.finalBalance)}
+            hint={`${t("yield.stat.final.hint")} ${fmtMoney(result.realFinalBalance)}`}
             accent="primary"
           />
           <StatCard
-            label="Vloženo celkem"
-            value={formatCZK(result.totalContributed)}
+            label={t("yield.stat.contributed")}
+            value={fmtMoney(result.totalContributed)}
             hint={
               reinvest
-                ? `Růst: ${formatCZK(result.finalBalance - result.totalContributed)}`
-                : `Vyplaceno: ${formatCZK(result.totalPaidOut)}`
+                ? `${t("yield.stat.growth")} ${fmtMoney(result.finalBalance - result.totalContributed)}`
+                : `${t("yield.stat.paidOut")} ${fmtMoney(result.totalPaidOut)}`
             }
           />
           <StatCard
-            label="Výnosy po zdanění"
-            value={formatCZK(result.totalYieldNet)}
-            hint={`Hrubě: ${formatCZK(result.totalYieldGross)}`}
+            label={t("yield.stat.netYield")}
+            value={fmtMoney(result.totalYieldNet)}
+            hint={`${t("yield.stat.grossYield")} ${fmtMoney(result.totalYieldGross)}`}
             accent="success"
           />
           <StatCard
-            label="Efektivní výnos"
-            value={formatPct(result.effectiveAfterTaxPct, 2)}
-            hint={`Reálně: ${formatPct(result.effectiveRealPct, 2)}`}
+            label={t("yield.stat.effective")}
+            value={fmtPct(result.effectiveAfterTaxPct, 2)}
+            hint={`${t("yield.stat.effective.hint")} ${fmtPct(result.effectiveRealPct, 2)}`}
             accent={result.effectiveRealPct > 0 ? "success" : "destructive"}
           />
         </div>
 
-        <Panel title="Vývoj investice">
+        <Panel title={t("yield.chart.title")}>
           <div className="h-[340px]">
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chartData} margin={{ left: 0, right: 8, top: 8, bottom: 0 }}>
@@ -173,7 +182,7 @@ export function YieldSimulator() {
                   dataKey="month"
                   stroke="var(--color-muted-foreground)"
                   tick={{ fontSize: 11 }}
-                  tickFormatter={(m) => `${Math.round(m / 12)}r`}
+                  tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
                 />
                 <YAxis
                   stroke="var(--color-muted-foreground)"
@@ -187,12 +196,12 @@ export function YieldSimulator() {
                     borderRadius: 12,
                     fontSize: 12,
                   }}
-                  formatter={(v: number) => formatCZK(v)}
-                  labelFormatter={(l) => `Měsíc ${l}`}
+                  formatter={(v: number) => fmtMoney(v)}
+                  labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
-                  name="Hodnota"
+                  name={t("yield.chart.value")}
                   type="monotone"
                   dataKey="balance"
                   stroke="var(--color-chart-1)"
@@ -200,7 +209,7 @@ export function YieldSimulator() {
                   strokeWidth={2}
                 />
                 <Area
-                  name="Vloženo"
+                  name={t("yield.chart.contributed")}
                   type="monotone"
                   dataKey="contributed"
                   stroke="var(--color-chart-2)"
