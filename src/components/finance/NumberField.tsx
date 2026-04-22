@@ -1,6 +1,7 @@
 import * as React from "react";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useI18n } from "@/lib/i18n/context";
 
 interface NumberFieldProps {
   value: number;
@@ -13,7 +14,7 @@ interface NumberFieldProps {
   decimals?: number;
 }
 
-/** Input that displays numbers with Czech thousand separators (e.g. 1 200 000)
+/** Input that displays numbers with thousand separators in the active locale
  *  while emitting clean numeric values to the parent. */
 export function NumberField({
   value,
@@ -25,21 +26,22 @@ export function NumberField({
   ariaLabel,
   decimals = 0,
 }: NumberFieldProps) {
+  const { spec } = useI18n();
   const [editing, setEditing] = React.useState(false);
   const [draft, setDraft] = React.useState("");
 
   const formatted = React.useMemo(() => {
     if (!Number.isFinite(value)) return "";
-    return value.toLocaleString("cs-CZ", {
+    return value.toLocaleString(spec.locale, {
       minimumFractionDigits: 0,
       maximumFractionDigits: decimals,
     });
-  }, [value, decimals]);
+  }, [value, decimals, spec.locale]);
 
   const display = editing ? draft : formatted;
 
   const commit = (raw: string) => {
-    // Strip spaces and non-breaking spaces, accept comma as decimal separator
+    // Strip spaces (incl. NBSP) and accept comma as decimal separator
     const cleaned = raw.replace(/[\s\u00A0\u202F]/g, "").replace(",", ".");
     if (cleaned === "" || cleaned === "-") {
       onChange(min ?? 0);
@@ -62,7 +64,6 @@ export function NumberField({
       onFocus={(e) => {
         setDraft(String(value));
         setEditing(true);
-        // Select all for quick replacement
         requestAnimationFrame(() => e.target.select());
       }}
       onChange={(e) => setDraft(e.target.value)}
