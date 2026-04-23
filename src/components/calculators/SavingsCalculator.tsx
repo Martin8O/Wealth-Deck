@@ -167,10 +167,15 @@ export function SavingsCalculator() {
               max={30}
               unit={t("common.years")}
             />
-            <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
-              <Label className="text-sm">{t("savings.tax")}</Label>
-              <Switch checked={applyTax} onCheckedChange={setApplyTax} />
-            </div>
+            <SliderField
+              label={t("savings.tax")}
+              value={taxPct}
+              onChange={setTaxPct}
+              min={0}
+              max={35}
+              step={1}
+              unit={t("common.percent")}
+            />
           </div>
         </Panel>
 
@@ -238,7 +243,7 @@ export function SavingsCalculator() {
                       {t("savings.alloc.row.interest")} {fmtMoney(a.monthlyInterestNet)}{" "}
                       {t("savings.alloc.row.perMonth")} ·{" "}
                       {fmtMoney(a.annualInterestNet)} {t("savings.alloc.row.perYear")}
-                      {applyTax ? ` ${t("savings.alloc.row.afterTax")}` : ""}
+                      {taxPct > 0 ? ` ${t("savings.alloc.row.afterTax")}` : ""}
                     </p>
                   </div>
                 );
