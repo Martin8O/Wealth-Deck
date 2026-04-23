@@ -82,7 +82,7 @@ export function YieldSimulator() {
             value={monthly}
             onChange={setMonthly}
             min={0}
-            max={spec.smallCap * 2}
+            max={spec.smallCap}
             step={spec.smallStep}
             format={(v) => fmtMoney(v)}
           />

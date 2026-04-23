@@ -13,8 +13,8 @@ type Dict = Record<string, string>;
 const cs: Dict = {
   // App shell
   "app.tagline": "Sjednocené finanční nástroje",
-  "app.title.prefix": "Finanční",
-  "app.title.highlight": "Kalkulátory",
+  "app.title.prefix": "Wealth",
+  "app.title.highlight": "Deck",
   "app.subtitle":
     "Pět profesionálních kalkulátorů — důchod, hypotéka, spoření, investice a flexibilní výnosy. Vyberte si níže.",
   "app.back": "Zpět na výběr",
@@ -118,7 +118,7 @@ const cs: Dict = {
   "savings.totalAmount": "Celková částka k uložení",
   "savings.monthly": "Měsíční vklad",
   "savings.duration": "Doba spoření",
-  "savings.tax": "Srážková daň 15 %",
+  "savings.tax": "Srážková daň",
   "savings.stat.final": "Konečný zůstatek",
   "savings.stat.final.hint": "Vloženo:",
   "savings.stat.interest": "Celkové úroky",
@@ -206,8 +206,8 @@ const cs: Dict = {
 
 const en: Dict = {
   "app.tagline": "Unified financial tools",
-  "app.title.prefix": "Financial",
-  "app.title.highlight": "Calculators",
+  "app.title.prefix": "Wealth",
+  "app.title.highlight": "Deck",
   "app.subtitle":
     "Five professional calculators — retirement, mortgage, savings, investments and flexible yield. Pick one below.",
   "app.back": "Back to selection",
@@ -306,7 +306,7 @@ const en: Dict = {
   "savings.totalAmount": "Total amount to deposit",
   "savings.monthly": "Monthly deposit",
   "savings.duration": "Saving duration",
-  "savings.tax": "Withholding tax 15%",
+  "savings.tax": "Withholding tax",
   "savings.stat.final": "Final balance",
   "savings.stat.final.hint": "Deposited:",
   "savings.stat.interest": "Total interest",

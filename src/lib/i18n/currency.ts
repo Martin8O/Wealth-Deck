@@ -2,8 +2,14 @@
 // the slider/numeric "scale" (used to derive sensible upper limits and steps
 // per calculator field), and the symbol. We do NOT do FX conversion of stored
 // values — switching currency simply re-labels and re-scales presets/limits.
-// (Per the user's request: amounts shown in the chosen currency, with caps:
-//  1M USD, 1M EUR, 20M CZK and matching steps.)
+//
+// Caps target (per user spec):
+//  - Big amounts (initial investment, current savings, property price, total
+//    savings, monthly contribution caps too live in `bigCap`):
+//      USD: 1M, EUR: 1M, CZK: 20M
+//  - Monthly amounts (monthlyCap — monthly contributions, extra mortgage
+//    payment, monthly fixed-CZK return):
+//      USD: 10k, EUR: 10k, CZK: 250k
 
 export type CurrencyCode = "USD" | "EUR" | "CZK";
 
@@ -18,19 +24,21 @@ export interface CurrencySpec {
   symbol: string;
   /** Locale used for number formatting in this currency. */
   locale: string;
-  /** Big-money cap (used for: property price, total savings, total investment). */
+  /** Big-money cap. Used for: property price, total savings, current savings,
+   *  initial investment, asset invested, total savings to deposit. */
   bigCap: number;
-  /** Mid-money cap (current savings, initial investment, asset invested). */
+  /** Mid-money cap. Same semantics as `bigCap` in this app — kept for
+   *  back-compat with components that still reference it. */
   midCap: number;
-  /** Small-money cap (monthly contributions, extra payment, desired pension). */
+  /** Monthly cap (monthly contributions, extra mortgage payment, etc.). */
   smallCap: number;
-  /** Tiny cap for monthly fixed-CZK return. */
+  /** Tiny cap for monthly fixed-CZK return slot. */
   tinyCap: number;
   /** Step for big amounts. */
   bigStep: number;
   /** Step for mid amounts. */
   midStep: number;
-  /** Step for small amounts. */
+  /** Step for small (monthly) amounts. */
   smallStep: number;
   /** Step for tiny amounts. */
   tinyStep: number;
@@ -59,11 +67,11 @@ export const CURRENCIES: Record<CurrencyCode, CurrencySpec> = {
     symbol: "$",
     locale: "en-US",
     bigCap: 1_000_000,
-    midCap: 250_000,
-    smallCap: 5_000,
-    tinyCap: 5_000,
+    midCap: 1_000_000,
+    smallCap: 10_000,
+    tinyCap: 10_000,
     bigStep: 5_000,
-    midStep: 1_000,
+    midStep: 5_000,
     smallStep: 50,
     tinyStep: 25,
     defaults: {
@@ -88,11 +96,11 @@ export const CURRENCIES: Record<CurrencyCode, CurrencySpec> = {
     symbol: "€",
     locale: "de-DE",
     bigCap: 1_000_000,
-    midCap: 250_000,
-    smallCap: 5_000,
-    tinyCap: 5_000,
+    midCap: 1_000_000,
+    smallCap: 10_000,
+    tinyCap: 10_000,
     bigStep: 5_000,
-    midStep: 1_000,
+    midStep: 5_000,
     smallStep: 50,
     tinyStep: 25,
     defaults: {
@@ -117,13 +125,13 @@ export const CURRENCIES: Record<CurrencyCode, CurrencySpec> = {
     symbol: "Kč",
     locale: "cs-CZ",
     bigCap: 20_000_000,
-    midCap: 5_000_000,
-    smallCap: 100_000,
-    tinyCap: 100_000,
+    midCap: 20_000_000,
+    smallCap: 250_000,
+    tinyCap: 250_000,
     bigStep: 50_000,
-    midStep: 10_000,
+    midStep: 50_000,
     smallStep: 500,
-    tinyStep: 100,
+    tinyStep: 250,
     defaults: {
       pensionSavings: 200_000,
       pensionMonthly: 5_000,

@@ -13,7 +13,6 @@ import { Panel } from "@/components/finance/Panel";
 import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
 import { NumberField } from "@/components/finance/NumberField";
-import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
@@ -72,7 +71,7 @@ export function SavingsCalculator() {
   const [totalAmount, setTotalAmount] = useState(d.savingsTotal);
   const [monthly, setMonthly] = useState(d.savingsMonthly);
   const [years, setYears] = useState(5);
-  const [applyTax, setApplyTax] = useState(true);
+  const [taxPct, setTaxPct] = useState(15);
   const [accounts, setAccounts] = useState<SavingsAccount[]>(() =>
     makeDefaultAccounts(spec),
   );
@@ -92,10 +91,10 @@ export function SavingsCalculator() {
         totalAmount,
         monthlyDeposit: monthly,
         months,
-        applyTax,
+        taxPct,
         accounts,
       }),
-    [totalAmount, monthly, months, applyTax, accounts],
+    [totalAmount, monthly, months, taxPct, accounts],
   );
 
   const chartData = useMemo(() => {
@@ -155,7 +154,7 @@ export function SavingsCalculator() {
               value={monthly}
               onChange={setMonthly}
               min={0}
-              max={spec.smallCap * 2}
+              max={spec.smallCap}
               step={spec.smallStep}
               format={(v) => fmtMoney(v)}
             />
@@ -167,10 +166,15 @@ export function SavingsCalculator() {
               max={30}
               unit={t("common.years")}
             />
-            <div className="flex items-center justify-between rounded-xl border border-border bg-secondary/30 px-3 py-2.5">
-              <Label className="text-sm">{t("savings.tax")}</Label>
-              <Switch checked={applyTax} onCheckedChange={setApplyTax} />
-            </div>
+            <SliderField
+              label={t("savings.tax")}
+              value={taxPct}
+              onChange={setTaxPct}
+              min={0}
+              max={35}
+              step={1}
+              unit={t("common.percent")}
+            />
           </div>
         </Panel>
 
@@ -238,7 +242,7 @@ export function SavingsCalculator() {
                       {t("savings.alloc.row.interest")} {fmtMoney(a.monthlyInterestNet)}{" "}
                       {t("savings.alloc.row.perMonth")} ·{" "}
                       {fmtMoney(a.annualInterestNet)} {t("savings.alloc.row.perYear")}
-                      {applyTax ? ` ${t("savings.alloc.row.afterTax")}` : ""}
+                      {taxPct > 0 ? ` ${t("savings.alloc.row.afterTax")}` : ""}
                     </p>
                   </div>
                 );

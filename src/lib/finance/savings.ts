@@ -16,11 +16,10 @@ export interface SavingsInputs {
   totalAmount: number; // total capital to distribute today
   monthlyDeposit: number; // additional monthly deposit (also optimally distributed)
   months: number;
-  applyTax: boolean; // 15% withholding on interest
+  /** Withholding tax on interest, in percent. 0 = no tax. */
+  taxPct: number;
   accounts: SavingsAccount[];
 }
-
-const TAX = 0.15;
 
 export interface AccountAllocation {
   accountId: string;
@@ -81,8 +80,9 @@ function distribute(
 function summarizeAllocation(
   amounts: Record<string, number>,
   accounts: SavingsAccount[],
-  applyTax: boolean,
+  taxPct: number,
 ): AccountAllocation[] {
+  const taxFactor = 1 - Math.max(0, Math.min(100, taxPct)) / 100;
   return accounts.map((a) => {
     const amount = amounts[a.id] ?? 0;
     const below = Math.min(amount, a.cap);
@@ -90,7 +90,7 @@ function summarizeAllocation(
     const grossAnnual =
       (below * a.rateBelowPct) / 100 + (above * a.rateAbovePct) / 100;
     const blended = amount > 0 ? (grossAnnual / amount) * 100 : 0;
-    const netAnnual = applyTax ? grossAnnual * (1 - TAX) : grossAnnual;
+    const netAnnual = grossAnnual * taxFactor;
     return {
       accountId: a.id,
       accountName: a.name,
@@ -104,13 +104,14 @@ function summarizeAllocation(
 
 export function calcSavingsOptimized(input: SavingsInputs): SavingsOptimizedResult {
   const slots = buildSlots(input.accounts);
+  const taxFactor = 1 - Math.max(0, Math.min(100, input.taxPct)) / 100;
 
   // Initial allocation snapshot
   const initialAmounts = distribute(input.totalAmount, slots);
   const initialAllocations = summarizeAllocation(
     initialAmounts,
     input.accounts,
-    input.applyTax,
+    input.taxPct,
   );
 
   // Time evolution: each month add monthlyDeposit, then re-distribute total
@@ -139,7 +140,7 @@ export function calcSavingsOptimized(input: SavingsInputs): SavingsOptimizedResu
       const annualGross = (below * a.rateBelowPct) / 100 + (above * a.rateAbovePct) / 100;
       const monthlyRate = Math.pow(1 + (amt > 0 ? annualGross / amt : 0), 1 / 12) - 1;
       let int = amt * monthlyRate;
-      if (input.applyTax) int *= 1 - TAX;
+      int *= taxFactor;
       monthInterest += int;
       perAccountSchedule[a.id].push({ month: m, balance: amt });
     }
@@ -151,7 +152,7 @@ export function calcSavingsOptimized(input: SavingsInputs): SavingsOptimizedResu
 
   // Final allocation reflects redistribution after last interest credit
   const finalAmounts = distribute(totalBalance, slots);
-  const finalAllocations = summarizeAllocation(finalAmounts, input.accounts, input.applyTax);
+  const finalAllocations = summarizeAllocation(finalAmounts, input.accounts, input.taxPct);
 
   const totalDeposited = input.totalAmount + input.monthlyDeposit * input.months;
   const years = input.months / 12;

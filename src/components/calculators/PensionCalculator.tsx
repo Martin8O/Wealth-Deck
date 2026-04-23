@@ -131,7 +131,7 @@ export function PensionCalculator() {
             value={desiredPension}
             onChange={setDesiredPension}
             min={0}
-            max={spec.smallCap * 2}
+            max={spec.smallCap}
             step={spec.smallStep * 2}
             format={(v) => fmtMoney(v)}
           />
