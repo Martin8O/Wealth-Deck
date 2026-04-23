@@ -140,7 +140,7 @@ export function calcSavingsOptimized(input: SavingsInputs): SavingsOptimizedResu
       const annualGross = (below * a.rateBelowPct) / 100 + (above * a.rateAbovePct) / 100;
       const monthlyRate = Math.pow(1 + (amt > 0 ? annualGross / amt : 0), 1 / 12) - 1;
       let int = amt * monthlyRate;
-      if (input.applyTax) int *= 1 - TAX;
+      int *= taxFactor;
       monthInterest += int;
       perAccountSchedule[a.id].push({ month: m, balance: amt });
     }
@@ -152,7 +152,7 @@ export function calcSavingsOptimized(input: SavingsInputs): SavingsOptimizedResu
 
   // Final allocation reflects redistribution after last interest credit
   const finalAmounts = distribute(totalBalance, slots);
-  const finalAllocations = summarizeAllocation(finalAmounts, input.accounts, input.applyTax);
+  const finalAllocations = summarizeAllocation(finalAmounts, input.accounts, input.taxPct);
 
   const totalDeposited = input.totalAmount + input.monthlyDeposit * input.months;
   const years = input.months / 12;

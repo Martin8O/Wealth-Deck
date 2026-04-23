@@ -72,7 +72,7 @@ export function SavingsCalculator() {
   const [totalAmount, setTotalAmount] = useState(d.savingsTotal);
   const [monthly, setMonthly] = useState(d.savingsMonthly);
   const [years, setYears] = useState(5);
-  const [applyTax, setApplyTax] = useState(true);
+  const [taxPct, setTaxPct] = useState(15);
   const [accounts, setAccounts] = useState<SavingsAccount[]>(() =>
     makeDefaultAccounts(spec),
   );
@@ -92,10 +92,10 @@ export function SavingsCalculator() {
         totalAmount,
         monthlyDeposit: monthly,
         months,
-        applyTax,
+        taxPct,
         accounts,
       }),
-    [totalAmount, monthly, months, applyTax, accounts],
+    [totalAmount, monthly, months, taxPct, accounts],
   );
 
   const chartData = useMemo(() => {
