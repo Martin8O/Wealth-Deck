@@ -13,7 +13,7 @@ import { Panel } from "@/components/finance/Panel";
 import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
 import { NumberField } from "@/components/finance/NumberField";
-import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
