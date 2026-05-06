@@ -43,6 +43,14 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setLangState(readLang());
     setCurrencyState(readCurrency());
+    const onSync = () => {
+      setLangState(readLang());
+      setCurrencyState(readCurrency());
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("wd:storage-sync", onSync);
+      return () => window.removeEventListener("wd:storage-sync", onSync);
+    }
   }, []);
 
   const setLang = React.useCallback((l: Lang) => {
