@@ -41,14 +41,20 @@ export function StatCard({
       </div>
       <p
         className={cn(
-          "mt-2 text-xl font-semibold tabular leading-tight [overflow-wrap:anywhere] sm:text-2xl md:text-3xl",
+          "mt-2 text-lg font-semibold tabular leading-tight break-words sm:text-xl md:text-2xl",
           accentMap[accent],
         )}
+        style={{ wordBreak: "normal", overflowWrap: "break-word" }}
       >
         {value}
       </p>
       {hint && (
-        <p className="mt-1.5 text-xs text-muted-foreground tabular [overflow-wrap:anywhere]">{hint}</p>
+        <p
+          className="mt-1.5 text-xs text-muted-foreground tabular break-words"
+          style={{ wordBreak: "normal", overflowWrap: "break-word" }}
+        >
+          {hint}
+        </p>
       )}
     </div>
   );

@@ -78,7 +78,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       t: (key: string) => translate(lang, key),
       fmtMoney: (n: number, decimals = 0) => {
         if (!Number.isFinite(n)) return "—";
-        return decimals > 0 ? moneyFmt2.format(n) : moneyFmt.format(Math.round(n));
+        const out =
+          decimals > 0 ? moneyFmt2.format(n) : moneyFmt.format(Math.round(n));
+        // Keep digit groups unbreakable (NBSP between thousands), but allow
+        // a line break right before the currency symbol/code by using a
+        // regular space there. Intl uses NBSP (\u00A0) and NNBSP (\u202F)
+        // between groups AND before the symbol — convert only the LAST one.
+        return out.replace(/[\u00A0\u202F](?=\D*$)/, " ");
       },
       fmtNum: (n: number, decimals = 0) => {
         if (!Number.isFinite(n)) return "—";
