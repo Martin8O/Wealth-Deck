@@ -24,6 +24,9 @@ const cs: Dict = {
   "app.currency.toggle": "Měna",
   "app.vibecoded": "Vibecoded by",
   "app.with": "with",
+  "save.export": "Export",
+  "save.import": "Import",
+  "save.import.error": "Soubor nelze načíst — neplatný formát.",
 
   // Calculator cards
   "calc.pension.title": "Důchodová kalkulačka",
@@ -218,6 +221,9 @@ const en: Dict = {
   "app.currency.toggle": "Currency",
   "app.vibecoded": "Vibecoded by",
   "app.with": "with",
+  "save.export": "Export",
+  "save.import": "Import",
+  "save.import.error": "Could not read the file — invalid format.",
 
   "calc.pension.title": "Retirement Calculator",
   "calc.pension.subtitle": "Retirement Plan",

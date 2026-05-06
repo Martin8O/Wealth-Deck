@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -23,6 +23,7 @@ import {
   type SavingsAccount,
 } from "@/lib/finance/savings";
 import { useI18n } from "@/lib/i18n/context";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
 const COLORS = [
   "var(--color-chart-1)",
@@ -36,53 +37,28 @@ function makeDefaultAccounts(spec: {
   defaults: { savingsAccountCap: number };
   code: string;
 }): SavingsAccount[] {
-  // For non-CZK currencies, scale defaults proportionally vs CZK templates.
   if (spec.code === "CZK") return DEFAULT_ACCOUNTS;
   const cap = spec.defaults.savingsAccountCap;
   return [
-    {
-      id: "bank_a",
-      name: "Bank A",
-      rateBelowPct: 4.0,
-      cap,
-      rateAbovePct: 0.5,
-    },
-    {
-      id: "bank_b",
-      name: "Bank B",
-      rateBelowPct: 3.75,
-      cap: cap * 2,
-      rateAbovePct: 1.0,
-    },
-    {
-      id: "bank_c",
-      name: "Bank C",
-      rateBelowPct: 4.5,
-      cap: Math.round(cap * 1.2),
-      rateAbovePct: 1.5,
-    },
+    { id: "bank_a", name: "Bank A", rateBelowPct: 4.0, cap, rateAbovePct: 0.5 },
+    { id: "bank_b", name: "Bank B", rateBelowPct: 3.75, cap: cap * 2, rateAbovePct: 1.0 },
+    { id: "bank_c", name: "Bank C", rateBelowPct: 4.5, cap: Math.round(cap * 1.2), rateAbovePct: 1.5 },
   ];
 }
 
 export function SavingsCalculator() {
   const { t, fmtMoney, fmtPct, spec } = useI18n();
   const d = spec.defaults;
+  const ck = spec.code;
 
-  const [totalAmount, setTotalAmount] = useState(d.savingsTotal);
-  const [monthly, setMonthly] = useState(d.savingsMonthly);
-  const [years, setYears] = useState(5);
-  const [taxPct, setTaxPct] = useState(15);
-  const [accounts, setAccounts] = useState<SavingsAccount[]>(() =>
+  const [totalAmount, setTotalAmount] = usePersistentState(`savings:${ck}:total`, d.savingsTotal);
+  const [monthly, setMonthly] = usePersistentState(`savings:${ck}:monthly`, d.savingsMonthly);
+  const [years, setYears] = usePersistentState(`savings:${ck}:years`, 5);
+  const [taxPct, setTaxPct] = usePersistentState(`savings:${ck}:tax`, 15);
+  const [accounts, setAccounts] = usePersistentState<SavingsAccount[]>(
+    `savings:${ck}:accounts`,
     makeDefaultAccounts(spec),
   );
-
-  // Reset money inputs and account caps when currency changes.
-  useEffect(() => {
-    setTotalAmount(d.savingsTotal);
-    setMonthly(d.savingsMonthly);
-    setAccounts(makeDefaultAccounts(spec));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.code]);
 
   const months = years * 12;
   const result = useMemo(

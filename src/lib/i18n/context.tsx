@@ -22,17 +22,25 @@ interface I18nContextValue {
 
 const I18nContext = React.createContext<I18nContextValue | null>(null);
 
-const LS_LANG = "fin-lang";
-const LS_CURRENCY = "fin-currency";
+const LS_LANG = "wd:lang";
+const LS_CURRENCY = "wd:currency";
 
+function readJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  const raw = window.localStorage.getItem(key);
+  if (raw == null) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 function readLang(): Lang {
-  if (typeof window === "undefined") return "en";
-  const v = window.localStorage.getItem(LS_LANG);
+  const v = readJSON<string>(LS_LANG, "en");
   return v === "cs" || v === "en" ? v : "en";
 }
 function readCurrency(): CurrencyCode {
-  if (typeof window === "undefined") return "USD";
-  const v = window.localStorage.getItem(LS_CURRENCY);
+  const v = readJSON<string>(LS_CURRENCY, "USD");
   return v === "USD" || v === "EUR" || v === "CZK" ? v : "USD";
 }
 
@@ -43,15 +51,25 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
   React.useEffect(() => {
     setLangState(readLang());
     setCurrencyState(readCurrency());
+    const onSync = () => {
+      setLangState(readLang());
+      setCurrencyState(readCurrency());
+    };
+    if (typeof window !== "undefined") {
+      window.addEventListener("wd:storage-sync", onSync);
+      return () => window.removeEventListener("wd:storage-sync", onSync);
+    }
   }, []);
 
   const setLang = React.useCallback((l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") window.localStorage.setItem(LS_LANG, l);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem(LS_LANG, JSON.stringify(l));
   }, []);
   const setCurrency = React.useCallback((c: CurrencyCode) => {
     setCurrencyState(c);
-    if (typeof window !== "undefined") window.localStorage.setItem(LS_CURRENCY, c);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem(LS_CURRENCY, JSON.stringify(c));
   }, []);
 
   const value = React.useMemo<I18nContextValue>(() => {
@@ -78,7 +96,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
       t: (key: string) => translate(lang, key),
       fmtMoney: (n: number, decimals = 0) => {
         if (!Number.isFinite(n)) return "—";
-        return decimals > 0 ? moneyFmt2.format(n) : moneyFmt.format(Math.round(n));
+        const out =
+          decimals > 0 ? moneyFmt2.format(n) : moneyFmt.format(Math.round(n));
+        // Keep digit groups unbreakable (NBSP between thousands), but allow
+        // a line break right before the currency symbol/code by using a
+        // regular space there. Intl uses NBSP (\u00A0) and NNBSP (\u202F)
+        // between groups AND before the symbol — convert only the LAST one.
+        return out.replace(/[\u00A0\u202F](?=\D*$)/, " ");
       },
       fmtNum: (n: number, decimals = 0) => {
         if (!Number.isFinite(n)) return "—";
