@@ -25,14 +25,22 @@ const I18nContext = React.createContext<I18nContextValue | null>(null);
 const LS_LANG = "wd:lang";
 const LS_CURRENCY = "wd:currency";
 
+function readJSON<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  const raw = window.localStorage.getItem(key);
+  if (raw == null) return fallback;
+  try {
+    return JSON.parse(raw) as T;
+  } catch {
+    return fallback;
+  }
+}
 function readLang(): Lang {
-  if (typeof window === "undefined") return "en";
-  const v = window.localStorage.getItem(LS_LANG);
+  const v = readJSON<string>(LS_LANG, "en");
   return v === "cs" || v === "en" ? v : "en";
 }
 function readCurrency(): CurrencyCode {
-  if (typeof window === "undefined") return "USD";
-  const v = window.localStorage.getItem(LS_CURRENCY);
+  const v = readJSON<string>(LS_CURRENCY, "USD");
   return v === "USD" || v === "EUR" || v === "CZK" ? v : "USD";
 }
 
@@ -55,11 +63,13 @@ export function I18nProvider({ children }: { children: React.ReactNode }) {
 
   const setLang = React.useCallback((l: Lang) => {
     setLangState(l);
-    if (typeof window !== "undefined") window.localStorage.setItem(LS_LANG, l);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem(LS_LANG, JSON.stringify(l));
   }, []);
   const setCurrency = React.useCallback((c: CurrencyCode) => {
     setCurrencyState(c);
-    if (typeof window !== "undefined") window.localStorage.setItem(LS_CURRENCY, c);
+    if (typeof window !== "undefined")
+      window.localStorage.setItem(LS_CURRENCY, JSON.stringify(c));
   }, []);
 
   const value = React.useMemo<I18nContextValue>(() => {
