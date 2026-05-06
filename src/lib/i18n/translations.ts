@@ -160,6 +160,7 @@ const cs: Dict = {
   "investment.chart.total": "Celkem",
   "investment.assets.title": "Aktiva v portfoliu",
   "investment.assets.add": "Přidat aktivum",
+  "investment.assets.empty": "Zatím žádná aktiva. Přidej první aktivum tlačítkem výše.",
   "investment.asset.new": "Aktivum",
   "investment.asset.invested": "Počáteční investice",
   "investment.asset.monthly": "Měsíční příspěvek",
