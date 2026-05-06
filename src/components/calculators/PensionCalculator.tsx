@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -14,29 +14,22 @@ import { SliderField } from "@/components/finance/SliderField";
 import { StatCard } from "@/components/finance/StatCard";
 import { calcPension } from "@/lib/finance/pension";
 import { useI18n } from "@/lib/i18n/context";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { AlertTriangle } from "lucide-react";
 
 export function PensionCalculator() {
   const { t, fmtMoney, spec } = useI18n();
   const d = spec.defaults;
+  const ck = spec.code;
 
-  const [currentAge, setCurrentAge] = useState(35);
-  const [retirementAge, setRetirementAge] = useState(65);
-  const [currentSavings, setCurrentSavings] = useState(d.pensionSavings);
-  const [monthlyContribution, setMonthlyContribution] = useState(d.pensionMonthly);
-  const [expectedReturn, setExpectedReturn] = useState(7);
-  const [inflation, setInflation] = useState(2.5);
-  const [desiredPension, setDesiredPension] = useState(d.pensionDesired);
-  const [lifeExpectancy, setLifeExpectancy] = useState(90);
-
-  // When currency changes, reset money inputs to that currency's defaults so
-  // values stay sensible (no FX conversion is performed).
-  useEffect(() => {
-    setCurrentSavings(d.pensionSavings);
-    setMonthlyContribution(d.pensionMonthly);
-    setDesiredPension(d.pensionDesired);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.code]);
+  const [currentAge, setCurrentAge] = usePersistentState(`pension:${ck}:age`, 35);
+  const [retirementAge, setRetirementAge] = usePersistentState(`pension:${ck}:retire`, 65);
+  const [currentSavings, setCurrentSavings] = usePersistentState(`pension:${ck}:savings`, d.pensionSavings);
+  const [monthlyContribution, setMonthlyContribution] = usePersistentState(`pension:${ck}:monthly`, d.pensionMonthly);
+  const [expectedReturn, setExpectedReturn] = usePersistentState(`pension:${ck}:return`, 7);
+  const [inflation, setInflation] = usePersistentState(`pension:${ck}:infl`, 2.5);
+  const [desiredPension, setDesiredPension] = usePersistentState(`pension:${ck}:desired`, d.pensionDesired);
+  const [lifeExpectancy, setLifeExpectancy] = usePersistentState(`pension:${ck}:life`, 90);
 
   const result = useMemo(
     () =>

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -26,6 +26,7 @@ import {
 } from "@/lib/finance/investment";
 import type { Frequency } from "@/lib/finance/frequency";
 import { useI18n } from "@/lib/i18n/context";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
 interface DefaultsLike {
   investmentInvested: number;
@@ -51,16 +52,11 @@ const newAsset = (idx: number, name: string, d: DefaultsLike): InvestmentAsset =
 export function InvestmentCalculator() {
   const { t, fmtMoney, fmtPct, spec } = useI18n();
   const d = spec.defaults;
+  const ck = spec.code;
 
-  const [horizonYears, setHorizonYears] = useState(15);
-  const [inflation, setInflation] = useState(2.5);
-  const [assets, setAssets] = useState<InvestmentAsset[]>([]);
-
-  // Reset assets when currency changes (amounts would no longer make sense).
-  useEffect(() => {
-    setAssets([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.code]);
+  const [horizonYears, setHorizonYears] = usePersistentState(`inv:${ck}:horizon`, 15);
+  const [inflation, setInflation] = usePersistentState(`inv:${ck}:infl`, 2.5);
+  const [assets, setAssets] = usePersistentState<InvestmentAsset[]>(`inv:${ck}:assets`, []);
 
   const result = useMemo(
     () =>

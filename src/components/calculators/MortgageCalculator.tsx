@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -15,24 +15,19 @@ import { StatCard } from "@/components/finance/StatCard";
 import { MortgageSensitivity } from "@/components/finance/MortgageSensitivity";
 import { calcMortgage } from "@/lib/finance/mortgage";
 import { useI18n } from "@/lib/i18n/context";
+import { usePersistentState } from "@/hooks/usePersistentState";
 import { AlertTriangle } from "lucide-react";
 
 export function MortgageCalculator() {
   const { t, fmtMoney, fmtPct, fmtYears, spec } = useI18n();
   const d = spec.defaults;
+  const ck = spec.code;
 
-  const [price, setPrice] = useState(d.mortgagePrice);
-  const [downPayment, setDownPayment] = useState(d.mortgageDown);
-  const [years, setYears] = useState(30);
-  const [rate, setRate] = useState(5.2);
-  const [extra, setExtra] = useState(d.mortgageExtra);
-
-  useEffect(() => {
-    setPrice(d.mortgagePrice);
-    setDownPayment(d.mortgageDown);
-    setExtra(d.mortgageExtra);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.code]);
+  const [price, setPrice] = usePersistentState(`mortgage:${ck}:price`, d.mortgagePrice);
+  const [downPayment, setDownPayment] = usePersistentState(`mortgage:${ck}:down`, d.mortgageDown);
+  const [years, setYears] = usePersistentState(`mortgage:${ck}:years`, 30);
+  const [rate, setRate] = usePersistentState(`mortgage:${ck}:rate`, 5.2);
+  const [extra, setExtra] = usePersistentState(`mortgage:${ck}:extra`, d.mortgageExtra);
 
   const result = useMemo(
     () =>

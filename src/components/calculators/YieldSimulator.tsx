@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Area,
   AreaChart,
@@ -18,25 +18,21 @@ import { Label } from "@/components/ui/label";
 import { calcYieldSim } from "@/lib/finance/yieldSim";
 import type { Frequency } from "@/lib/finance/frequency";
 import { useI18n } from "@/lib/i18n/context";
+import { usePersistentState } from "@/hooks/usePersistentState";
 
 export function YieldSimulator() {
   const { t, fmtMoney, fmtPct, spec } = useI18n();
   const d = spec.defaults;
+  const ck = spec.code;
 
-  const [initial, setInitial] = useState(d.yieldInitial);
-  const [monthly, setMonthly] = useState(d.yieldMonthly);
-  const [yieldPct, setYieldPct] = useState(8);
-  const [frequency, setFrequency] = useState<Frequency>("monthly");
-  const [years, setYears] = useState(10);
-  const [tax, setTax] = useState(15);
-  const [inflation, setInflation] = useState(2.5);
-  const [reinvest, setReinvest] = useState(true);
-
-  useEffect(() => {
-    setInitial(d.yieldInitial);
-    setMonthly(d.yieldMonthly);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [spec.code]);
+  const [initial, setInitial] = usePersistentState(`yield:${ck}:initial`, d.yieldInitial);
+  const [monthly, setMonthly] = usePersistentState(`yield:${ck}:monthly`, d.yieldMonthly);
+  const [yieldPct, setYieldPct] = usePersistentState(`yield:${ck}:yield`, 8);
+  const [frequency, setFrequency] = usePersistentState<Frequency>(`yield:${ck}:freq`, "monthly");
+  const [years, setYears] = usePersistentState(`yield:${ck}:years`, 10);
+  const [tax, setTax] = usePersistentState(`yield:${ck}:tax`, 15);
+  const [inflation, setInflation] = usePersistentState(`yield:${ck}:infl`, 2.5);
+  const [reinvest, setReinvest] = usePersistentState(`yield:${ck}:reinvest`, true);
 
   const result = useMemo(
     () =>
