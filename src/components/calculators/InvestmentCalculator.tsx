@@ -80,7 +80,7 @@ export function InvestmentCalculator() {
       newAsset(prev.length + 1, `${t("investment.asset.new")} ${prev.length + 1}`, d),
     ]);
   const remove = (id: string) =>
-    setAssets((prev) => (prev.length > 1 ? prev.filter((a) => a.id !== id) : prev));
+    setAssets((prev) => prev.filter((a) => a.id !== id));
 
   const chartData = useMemo(() => {
     const months = horizonYears * 12;
