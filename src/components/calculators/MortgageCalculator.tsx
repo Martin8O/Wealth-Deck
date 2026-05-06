@@ -73,7 +73,7 @@ export function MortgageCalculator() {
   const downPct = price > 0 ? (downPayment / price) * 100 : 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[420px_minmax(0,1fr)]">
       <Panel title={t("common.inputs")} description={t("mortgage.inputs.desc")}>
         <div className="space-y-5">
           <SliderField
