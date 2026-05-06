@@ -47,21 +47,33 @@ export function MortgageCalculator() {
   );
 
   const chartData = useMemo(() => {
-    const step = Math.max(1, Math.floor(result.schedule.length / 120));
-    return result.schedule
-      .filter((_, i) => i % step === 0 || i === result.schedule.length - 1)
+    const sched = result.schedule;
+    if (sched.length === 0) return [];
+    // Snap to year boundaries so X-axis labels are unique years (no duplicates / gaps).
+    const points = sched
+      .filter((r) => r.month % 12 === 0)
       .map((r) => ({
         month: r.month,
         balance: Math.round(r.balance),
         interest: Math.round(r.interest),
         principal: Math.round(r.principal + r.extra),
       }));
+    const last = sched[sched.length - 1];
+    if (last.month % 12 !== 0) {
+      points.push({
+        month: last.month,
+        balance: Math.round(last.balance),
+        interest: Math.round(last.interest),
+        principal: Math.round(last.principal + last.extra),
+      });
+    }
+    return points;
   }, [result.schedule]);
 
   const downPct = price > 0 ? (downPayment / price) * 100 : 0;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[420px_1fr]">
+    <div className="grid gap-6 lg:grid-cols-[420px_minmax(0,1fr)]">
       <Panel title={t("common.inputs")} description={t("mortgage.inputs.desc")}>
         <div className="space-y-5">
           <SliderField

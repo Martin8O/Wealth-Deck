@@ -54,33 +54,11 @@ export function InvestmentCalculator() {
 
   const [horizonYears, setHorizonYears] = useState(15);
   const [inflation, setInflation] = useState(2.5);
-  const [assets, setAssets] = useState<InvestmentAsset[]>(() => [
-    { ...newAsset(1, t("investment.asset.etf"), d) },
-    {
-      ...newAsset(2, t("investment.asset.dividend"), d),
-      invested: Math.round(d.investmentInvested * 0.5),
-      monthlyContribution: Math.round(d.investmentMonthly * 0.5),
-      returnPct: 5,
-      paysDividends: true,
-      dividendYieldPct: 4.5,
-      dividendFrequency: "quarterly",
-    },
-  ]);
+  const [assets, setAssets] = useState<InvestmentAsset[]>([]);
 
-  // Reset asset money fields when currency changes.
+  // Reset assets when currency changes (amounts would no longer make sense).
   useEffect(() => {
-    setAssets([
-      { ...newAsset(1, t("investment.asset.etf"), d) },
-      {
-        ...newAsset(2, t("investment.asset.dividend"), d),
-        invested: Math.round(d.investmentInvested * 0.5),
-        monthlyContribution: Math.round(d.investmentMonthly * 0.5),
-        returnPct: 5,
-        paysDividends: true,
-        dividendYieldPct: 4.5,
-        dividendFrequency: "quarterly",
-      },
-    ]);
+    setAssets([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [spec.code]);
 
@@ -102,7 +80,7 @@ export function InvestmentCalculator() {
       newAsset(prev.length + 1, `${t("investment.asset.new")} ${prev.length + 1}`, d),
     ]);
   const remove = (id: string) =>
-    setAssets((prev) => (prev.length > 1 ? prev.filter((a) => a.id !== id) : prev));
+    setAssets((prev) => prev.filter((a) => a.id !== id));
 
   const chartData = useMemo(() => {
     const months = horizonYears * 12;
@@ -230,6 +208,11 @@ export function InvestmentCalculator() {
         }
       >
         <div className="space-y-4">
+          {assets.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-8 text-center text-sm text-muted-foreground">
+              {t("investment.assets.empty")}
+            </div>
+          )}
           {assets.map((a, idx) => {
             const r = result.perAsset[idx];
             return (
@@ -247,7 +230,6 @@ export function InvestmentCalculator() {
                     variant="ghost"
                     size="icon"
                     onClick={() => remove(a.id)}
-                    disabled={assets.length <= 1}
                   >
                     <Trash2 className="size-4" />
                   </Button>
