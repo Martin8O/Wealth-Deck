@@ -225,7 +225,6 @@ export function InvestmentCalculator() {
                     variant="ghost"
                     size="icon"
                     onClick={() => remove(a.id)}
-                    disabled={assets.length <= 1}
                   >
                     <Trash2 className="size-4" />
                   </Button>
