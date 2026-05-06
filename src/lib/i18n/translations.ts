@@ -348,6 +348,7 @@ const en: Dict = {
   "investment.chart.total": "Total",
   "investment.assets.title": "Portfolio assets",
   "investment.assets.add": "Add asset",
+  "investment.assets.empty": "No assets yet. Add your first asset using the button above.",
   "investment.asset.new": "Asset",
   "investment.asset.invested": "Initial investment",
   "investment.asset.monthly": "Monthly contribution",
