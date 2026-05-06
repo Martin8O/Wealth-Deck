@@ -41,14 +41,14 @@ export function StatCard({
       </div>
       <p
         className={cn(
-          "mt-2 break-words text-xl font-semibold tabular leading-tight sm:text-2xl md:text-3xl",
+          "mt-2 text-xl font-semibold tabular leading-tight [overflow-wrap:anywhere] sm:text-2xl md:text-3xl",
           accentMap[accent],
         )}
       >
         {value}
       </p>
       {hint && (
-        <p className="mt-1.5 break-words text-xs text-muted-foreground tabular">{hint}</p>
+        <p className="mt-1.5 text-xs text-muted-foreground tabular [overflow-wrap:anywhere]">{hint}</p>
       )}
     </div>
   );
