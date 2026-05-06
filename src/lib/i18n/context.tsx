@@ -22,8 +22,8 @@ interface I18nContextValue {
 
 const I18nContext = React.createContext<I18nContextValue | null>(null);
 
-const LS_LANG = "fin-lang";
-const LS_CURRENCY = "fin-currency";
+const LS_LANG = "wd:lang";
+const LS_CURRENCY = "wd:currency";
 
 function readLang(): Lang {
   if (typeof window === "undefined") return "en";
