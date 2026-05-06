@@ -208,6 +208,11 @@ export function InvestmentCalculator() {
         }
       >
         <div className="space-y-4">
+          {assets.length === 0 && (
+            <div className="rounded-xl border border-dashed border-border bg-secondary/20 p-8 text-center text-sm text-muted-foreground">
+              {t("investment.assets.empty")}
+            </div>
+          )}
           {assets.map((a, idx) => {
             const r = result.perAsset[idx];
             return (
