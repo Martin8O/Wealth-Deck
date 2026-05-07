@@ -78,9 +78,9 @@ Deployment:
 
 ```md
 
-![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.png)
+![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.jpg)
 
-![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.png)
+![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.jpg)
 ```
 
 ---
