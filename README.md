@@ -78,10 +78,9 @@ Deployment:
 
 
 
-![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.jpg)
+![Dashboard & Mortgage Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot.jpg)
 
-![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.jpg)
-![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot.jpg)
+![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot2.jpg)
 
 
 ---
