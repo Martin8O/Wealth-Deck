@@ -78,7 +78,6 @@ function CalculatorView({ k }: { k: CalcKey }) {
 function Switchers() {
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <AboutButton />
       <SaveLoadButtons />
       <LangToggle />
       <CurrencyToggle />
@@ -106,14 +105,17 @@ function Home_() {
       {active && (
         <div className="sticky top-0 z-40 border-b border-border bg-background/85 backdrop-blur-md">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-3 px-4 py-3 md:px-8">
-            <button
-              type="button"
-              onClick={() => setActive(null)}
-              className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
-            >
-              <ArrowLeft className="size-4" />
-              {t("app.back")}
-            </button>
+            <div className="flex items-center gap-2">
+              <AboutButton />
+              <button
+                type="button"
+                onClick={() => setActive(null)}
+                className="inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-sm font-medium text-muted-foreground transition-colors hover:text-foreground hover:bg-accent"
+              >
+                <ArrowLeft className="size-4" />
+                {t("app.back")}
+              </button>
+            </div>
             <div className="flex items-center gap-2">
               {activeCalc && (
                 <span className="hidden text-sm font-medium text-foreground md:inline">
@@ -130,7 +132,8 @@ function Home_() {
       <header className="hero-bg">
         <div className="mx-auto max-w-7xl px-4 pt-10 pb-8 md:px-8 md:pt-16 md:pb-12">
           {!active && (
-            <div className="flex justify-end">
+            <div className="flex items-center justify-between gap-2">
+              <AboutButton />
               <Switchers />
             </div>
           )}
