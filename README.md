@@ -82,11 +82,11 @@ Deployment:
 
 ![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot2.jpg)
 
-![Saving Accounts Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot3.jpg)
+![Saving Accounts Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/WealthDeck-screenshot3.jpg)
 
-![Investment Simulator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot4.jpg)
+![Investment Simulator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/WealthDeck-screenshot4.jpg)
 
-![Flexible Investment Simulator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot5.jpg)
+![Flexible Investment Simulator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/WealthDeck-screenshot5.jpg)
 
 ---
 
