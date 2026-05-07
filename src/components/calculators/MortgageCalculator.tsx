@@ -44,26 +44,26 @@ export function MortgageCalculator() {
   const chartData = useMemo(() => {
     const sched = result.schedule;
     if (sched.length === 0) return [];
-    // Snap to year boundaries so X-axis labels are unique years (no duplicates / gaps).
     const points = sched
       .filter((r) => r.month % 12 === 0)
       .map((r) => ({
-        month: r.month,
+        year: r.month / 12,
         balance: Math.round(r.balance),
         interest: Math.round(r.interest),
         principal: Math.round(r.principal + r.extra),
       }));
-    const last = sched[sched.length - 1];
-    if (last.month % 12 !== 0) {
-      points.push({
-        month: last.month,
-        balance: Math.round(last.balance),
-        interest: Math.round(last.interest),
-        principal: Math.round(last.principal + last.extra),
-      });
-    }
     return points;
   }, [result.schedule]);
+
+  const yearTicks = useMemo(() => {
+    if (chartData.length === 0) return [];
+    const last = chartData[chartData.length - 1].year;
+    const step = last <= 10 ? 1 : last <= 20 ? 2 : 5;
+    const ticks: number[] = [];
+    for (let y = step; y <= last; y += step) ticks.push(y);
+    if (ticks[ticks.length - 1] !== last) ticks.push(last);
+    return ticks;
+  }, [chartData]);
 
   const downPct = price > 0 ? (downPayment / price) * 100 : 0;
 
@@ -179,10 +179,19 @@ export function MortgageCalculator() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis
-                  dataKey="month"
+                  dataKey="year"
+                  type="number"
+                  domain={[0, "dataMax"]}
+                  ticks={yearTicks}
                   stroke="var(--color-muted-foreground)"
                   tick={{ fontSize: 11 }}
-                  tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
+                  tickFormatter={(y) => `${y}`}
+                  label={{
+                    value: t("common.years"),
+                    position: "insideBottom",
+                    offset: -2,
+                    style: { fill: "var(--color-muted-foreground)", fontSize: 11 },
+                  }}
                 />
                 <YAxis
                   stroke="var(--color-muted-foreground)"
@@ -197,7 +206,7 @@ export function MortgageCalculator() {
                     fontSize: 12,
                   }}
                   formatter={(v: number) => fmtMoney(v)}
-                  labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
+                  labelFormatter={(l) => `${t("common.year.short")} ${l}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
