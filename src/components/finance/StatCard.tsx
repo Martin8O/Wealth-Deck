@@ -29,7 +29,7 @@ export function StatCard({
   return (
     <div
       className={cn(
-        "group relative min-w-0 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)] transition-all duration-200 hover:shadow-md",
+        "group relative flex h-full min-w-0 flex-col overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-[var(--shadow-soft)] transition-all duration-200 hover:shadow-md",
         className,
       )}
     >
@@ -41,7 +41,7 @@ export function StatCard({
       </div>
       <p
         className={cn(
-          "mt-2 text-lg font-semibold tabular leading-tight break-words sm:text-xl md:text-2xl",
+          "mt-2 text-left text-lg font-semibold tabular leading-tight break-words sm:text-xl md:text-2xl",
           accentMap[accent],
         )}
         style={{ wordBreak: "normal", overflowWrap: "break-word" }}
@@ -50,7 +50,7 @@ export function StatCard({
       </p>
       {hint && (
         <p
-          className="mt-1.5 text-xs text-muted-foreground tabular break-words"
+          className="mt-auto pt-1.5 text-left text-xs text-muted-foreground tabular break-words"
           style={{ wordBreak: "normal", overflowWrap: "break-word" }}
         >
           {hint}
