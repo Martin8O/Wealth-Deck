@@ -81,8 +81,8 @@ Deployment:
 Example:
 
 ```md
-![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.png)
-![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.png)
+![Dashboard & Mortgage Preview](https://github.com/Martin8O/Wealth-Deck/screenshots/WealthDeck-screenshot.png)
+![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/screenshots/WealthDeck-screenshot2.png)
 ```
 
 ---
@@ -203,7 +203,7 @@ You can add a LICENSE file to the repository if desired.
 
 # Author
 
-Created by Martin Svoboda.
+Created by Martin8O.
 
 GitHub:
 [https://github.com/Martin8O](https://github.com/Martin8O)
