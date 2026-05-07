@@ -76,13 +76,13 @@ Deployment:
 
 # Screenshots
 
-```md
+
 
 ![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.jpg)
 
 ![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.jpg)
 ![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/blob/main/screenshots/wealthdeck-screenshot.jpg)
-```
+
 
 ---
 
