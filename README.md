@@ -76,13 +76,11 @@ Deployment:
 
 # Screenshots
 
-> Add screenshots or GIF previews here.
-
-Example:
-
 ```md
-![Dashboard & Mortgage Preview](https://github.com/Martin8O/Wealth-Deck/screenshots/WealthDeck-screenshot.png)
-![Retirement Calculator Preview](https://github.com/Martin8O/Wealth-Deck/screenshots/WealthDeck-screenshot2.png)
+
+![Dashboard & Mortgage Preview](./screenshots/WealthDeck-screenshot.png)
+
+![Retirement Calculator Preview](./screenshots/WealthDeck-screenshot2.png)
 ```
 
 ---
