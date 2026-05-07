@@ -179,10 +179,19 @@ export function MortgageCalculator() {
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                 <XAxis
-                  dataKey="month"
+                  dataKey="year"
+                  type="number"
+                  domain={[0, "dataMax"]}
+                  ticks={yearTicks}
                   stroke="var(--color-muted-foreground)"
                   tick={{ fontSize: 11 }}
-                  tickFormatter={(m) => `${Math.round(m / 12)}${t("common.year.short")}`}
+                  tickFormatter={(y) => `${y}`}
+                  label={{
+                    value: t("common.years"),
+                    position: "insideBottom",
+                    offset: -2,
+                    style: { fill: "var(--color-muted-foreground)", fontSize: 11 },
+                  }}
                 />
                 <YAxis
                   stroke="var(--color-muted-foreground)"
@@ -197,7 +206,7 @@ export function MortgageCalculator() {
                     fontSize: 12,
                   }}
                   formatter={(v: number) => fmtMoney(v)}
-                  labelFormatter={(l) => `${t("mortgage.chart.monthLabel")} ${l}`}
+                  labelFormatter={(l) => `${t("common.year.short")} ${l}`}
                 />
                 <Legend wrapperStyle={{ fontSize: 12 }} />
                 <Area
