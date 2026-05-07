@@ -27,6 +27,20 @@ const cs: Dict = {
   "save.export": "Export",
   "save.import": "Import",
   "save.import.error": "Soubor nelze načíst — neplatný formát.",
+  "about.title": "O aplikaci",
+  "about.tagline": "Wealth Deck — co to je, jak to funguje a jak je to s vaším soukromím.",
+  "about.what.title": "Co je Wealth Deck",
+  "about.what.body":
+    "Wealth Deck je sada pěti finančních kalkulátorů (důchod, hypotéka, spořicí účty, investice a flexibilní výnosy) v jednom rozhraní. Cílem je dát vám rychlý nástroj pro modelování scénářů — bez registrace, bez účtů a bez sledování.",
+  "about.privacy.title": "Soukromí a data",
+  "about.privacy.body":
+    "Veškeré výpočty probíhají výhradně ve vašem prohlížeči. Žádné vstupní hodnoty se neodesílají na server, neukládají do cloudu ani nesdílejí s třetími stranami. Vstupy z kalkulaček jsou ukládány lokálně (localStorage) jen do vašeho zařízení a kdykoli je můžete smazat vyčištěním dat prohlížeče. Export/Import slouží k ručnímu přenosu dat — soubor zůstává u vás.",
+  "about.security.title": "Anonymita a bezpečnost",
+  "about.security.body":
+    "Aplikace nepoužívá přihlašování, neukládá osobní údaje ani neprovádí analytické sledování chování. Stránka funguje i offline (lze ji uložit jako jeden HTML soubor a spustit lokálně). Z hlediska bezpečnosti zde tedy není co odcizit — vaše čísla nikdy neopustí váš počítač.",
+  "about.disclaimer.title": "Upozornění",
+  "about.disclaimer.body":
+    "Všechny výsledky jsou pouze orientační a slouží ke vzdělávacím a modelovým účelům. Nejde o investiční, daňové ani právní poradenství. Reálné produkty se liší poplatky, daněmi, inflací, kurzy a podmínkami konkrétních institucí. Před jakýmkoli finančním rozhodnutím se poraďte s licencovaným odborníkem.",
 
   // Calculator cards
   "calc.pension.title": "Důchodová kalkulačka",
@@ -224,6 +238,20 @@ const en: Dict = {
   "save.export": "Export",
   "save.import": "Import",
   "save.import.error": "Could not read the file — invalid format.",
+  "about.title": "About",
+  "about.tagline": "Wealth Deck — what it is, how it works and how your privacy is protected.",
+  "about.what.title": "What is Wealth Deck",
+  "about.what.body":
+    "Wealth Deck is a set of five financial calculators (retirement, mortgage, savings accounts, investments and flexible yield) in one interface. The goal is to give you a fast tool for modelling scenarios — no sign-up, no accounts, no tracking.",
+  "about.privacy.title": "Privacy & data",
+  "about.privacy.body":
+    "All calculations run entirely in your browser. No input values are sent to a server, stored in the cloud or shared with third parties. Calculator inputs are kept only in your device's local storage and can be removed at any time by clearing your browser data. Export/Import is fully manual — the file stays with you.",
+  "about.security.title": "Anonymity & security",
+  "about.security.body":
+    "The app has no login, stores no personal data and uses no behavioural analytics. It also works offline (it can be saved as a single HTML file and run locally). From a security standpoint there is nothing to steal — your numbers never leave your computer.",
+  "about.disclaimer.title": "Disclaimer",
+  "about.disclaimer.body":
+    "All results are indicative and intended for educational and modelling purposes only. This is not investment, tax or legal advice. Real-world products vary in fees, taxes, inflation, exchange rates and the terms of individual institutions. Consult a licensed professional before making any financial decision.",
 
   "calc.pension.title": "Retirement Calculator",
   "calc.pension.subtitle": "Retirement Plan",
