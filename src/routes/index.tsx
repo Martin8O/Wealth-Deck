@@ -15,6 +15,7 @@ import { ThemeToggle } from "@/components/finance/ThemeToggle";
 import { LangToggle } from "@/components/finance/LangToggle";
 import { CurrencyToggle } from "@/components/finance/CurrencyToggle";
 import { SaveLoadButtons } from "@/components/finance/SaveLoadButtons";
+import { AboutButton } from "@/components/finance/AboutButton";
 import { PensionCalculator } from "@/components/calculators/PensionCalculator";
 import { MortgageCalculator } from "@/components/calculators/MortgageCalculator";
 import { SavingsCalculator } from "@/components/calculators/SavingsCalculator";
@@ -77,6 +78,7 @@ function CalculatorView({ k }: { k: CalcKey }) {
 function Switchers() {
   return (
     <div className="flex flex-wrap items-center gap-2">
+      <AboutButton />
       <SaveLoadButtons />
       <LangToggle />
       <CurrencyToggle />
